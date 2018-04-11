@@ -28,6 +28,18 @@ Key DLian::CalculateKey(Node& vertex) {
     return res;
 }
 
+double calcAngle(const Node &dad, const Node &node, const Node &son) const {
+    double cos_angle = (node.j - dad.j) * (son.j - node.j) +
+                       (node.i - dad.i) * (son.i - node.i);
+    cos_angle /= getCost(son.i, son.j, node.i, node.j);
+    cos_angle /= getCost(node.i, node.j, dad.i, dad.j);
+
+    if (cos_angle < -1) cos_angle = -1;
+    if (cos_angle > 1) cos_angle = 1;
+
+    return acos(cos_angle);
+}
+
 Node* DLian::getFromNodes(Node current_node, int width, Node* parent) {
     auto it = NODES.find(current_node.convolution(width));
     if (it != NODES.end()) {
@@ -54,7 +66,9 @@ std::list<Node*> DLian::getAllNodes(Node current_node, int width) {
 void DLian::Initialize(Map &map)
 {
     Node start_node = Node(map.start_i, map.start_j);
+    start_node.radius = distance;
     Node goal_node = Node(map.goal_i, map.goal_j);
+    goal_node.radius = distance;
 
     NODES.insert({goal_node.convolution(map.get_width()), goal_node});
     goal = getFromNodes(goal_node, map.get_width());
@@ -68,6 +82,9 @@ void DLian::Initialize(Map &map)
     OPEN.put(start); //add start cell to OPEN list
 
     current_result.goal_became_unreachable = false;
+
+    calculateCircle((int) distance);
+    calculatePivotCircle();
 }
 
 

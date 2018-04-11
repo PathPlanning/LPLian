@@ -13,7 +13,8 @@ class DLian
 {
 public:
     DLian();
-    DLian(double HW);
+    DLian(float angleLimit_, int distance_, bool postsmoother_);
+
     ~DLian(void);
 
     //main function for the whole pathbuilding algorithm
@@ -21,6 +22,7 @@ public:
 
 private:
     float angleLimit;
+    int distance; // Minimal value of length of steps
 
     Node *start;
     Node *goal;
