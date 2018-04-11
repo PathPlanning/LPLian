@@ -8,50 +8,25 @@ struct Changes {
     std::list<Cell> cleared;
 };
 
+struct SearchResult {
 
-struct SearchResult
-{
-        bool pathfound;
-        float pathlength; //if path not found, then pathlength=0
-        const std::list<ANode>* lppath;
-        const std::list<ANode>* hppath;
-        unsigned int nodescreated; //|OPEN| + |CLOSE| = total number of nodes saved in memory during search process.
-        unsigned int numberofsteps; //number of iterations made by algorithm to find a solution
-        double time;
-        SearchResult()
-        {
-            pathfound = false;
-            pathlength = 0;
-            lppath = nullptr;
-            hppath = nullptr;
-            nodescreated = 0;
-            numberofsteps = 0;
-            time = 0;
-        }
+    bool pathfound;
+    float pathlength;
+    std::list<Node> hppath,lppath;
+    unsigned int nodescreated;
+    unsigned int numberofsteps;
+    std::vector<float> angles;
+    float accum_angle;
+    double time;
+    float max_angle;
+    int sections;
 
-};
-
-struct LPASearchResult
-{
-        bool pathfound;
-        bool goal_became_unreachable;
-        float pathlength; //if path not found, then pathlength=0
-        const std::list<Node>* lppath;
-        const std::list<Node>* hppath;
-        unsigned int nodescreated; //|OPEN| + |CLOSE| = total number of nodes saved in memory during search process.
-        unsigned int numberofsteps; //number of iterations made by algorithm to find a solution
-        double time;
-        LPASearchResult()
-        {
-            pathfound = false;
-            pathlength = 0;
-            lppath = nullptr;
-            hppath = nullptr;
-            nodescreated = 0;
-            numberofsteps = 0;
-            time = 0;
-        }
-
+    SearchResult() : pathfound(false), pathlength(0), nodescreated(0),
+                     numberofsteps(0), time(0), max_angle(0), sections(0) {
+        hppath.clear();
+        lppath.clear();
+        angles.clear();
+    }
 };
 
 

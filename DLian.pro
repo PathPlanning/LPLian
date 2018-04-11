@@ -15,7 +15,6 @@ SOURCES += main.cpp \
 
 HEADERS += \
     config.h \
-    environmentoptions.h \
     gl_const.h \
     heuristics.h \
     map.h \

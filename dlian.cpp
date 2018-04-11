@@ -40,6 +40,17 @@ Node* DLian::getFromNodes(Node current_node, int width, Node* parent) {
     }
 }
 
+std::list<Node*> DLian::getAllNodes(Node current_node, int width) {
+    std::list<Node*> all;
+    auto it = NODES.find(current_node.convolution(width));
+    if (it != NODES.end()) {
+        auto range = NODES.equal_range(it->first);
+        for (auto it = range.first; it != range.second; ++it)
+            all.push_back(&(it->second));
+    }
+    return all;
+}
+
 void DLian::Initialize(Map &map)
 {
     Node start_node = Node(map.start_i, map.start_j);
@@ -61,14 +72,14 @@ void DLian::Initialize(Map &map)
 
 
 //The main pathbuilding function
-LPASearchResult DLian::FindThePath(Map &map, EnvironmentOptions options)
+SearchResult DLian::FindThePath(Map &map)
 {
     std::chrono::time_point<std::chrono::system_clock> startt, end;
     startt = std::chrono::system_clock::now();
     number_of_steps = 0;
-    Initialize(map, options.metrictype); //algorithm initialization
+    Initialize(map); //algorithm initialization
 
-    if(!ComputeShortestPath(map, options)) {
+    if(!ComputeShortestPath(map)) {
         current_result.pathfound = false;
         current_result.pathlength = 0;
         end = std::chrono::system_clock::now();
@@ -81,9 +92,9 @@ LPASearchResult DLian::FindThePath(Map &map, EnvironmentOptions options)
         if (NODES.count(vertex(dam, map.get_height()))) {
             Node* d = &(NODES.find(vertex(dam, map.get_height()))->second);
             OPEN.remove_if(d);
-            for (auto neighbor: GetSurroundings(d, map, options)) {
+            for (auto neighbor: GetSurroundings(d, map)) {
                 if (!(neighbor->cell == start->cell) && (neighbor->parent->cell == dam || CutOrSqueeze(neighbor, d))) {
-                    Node min_val = GetMinPredecessor(neighbor, map, options);
+                    Node min_val = GetMinPredecessor(neighbor, map);
                     if (!min_val.parent) { //means that neighbor is now unreachable
                         OPEN.remove_if(neighbor);
                         if(neighbor->cell == goal->cell) { //means that after changes goal cell became unreachable
@@ -98,13 +109,13 @@ LPASearchResult DLian::FindThePath(Map &map, EnvironmentOptions options)
                     } else {
                         neighbor->rhs = min_val.rhs;
                         neighbor->parent = min_val.parent;
-                        UpdateVertex(neighbor, options.metrictype);
+                        UpdateVertex(neighbor);
                     }
                 }
             }
         }
     }
-    if(!ComputeShortestPath(map, options)) {
+    if(!ComputeShortestPath(map)) {
         current_result.pathfound = false;
         current_result.pathlength = 0;
         end = std::chrono::system_clock::now();
@@ -119,23 +130,23 @@ LPASearchResult DLian::FindThePath(Map &map, EnvironmentOptions options)
        new_node.g = std::numeric_limits<double>::infinity();
        NODES[vertex(cleared, map.get_height())] = new_node;
        Node * cl = &(NODES.find(vertex(cleared, map.get_height()))->second);
-       Node min_val = GetMinPredecessor(cl, map, options);
+       Node min_val = GetMinPredecessor(cl, map);
        if (min_val.parent) { //means that neighbor is reachable
            cl->rhs = min_val.rhs;
            cl->parent = min_val.parent;
            cl->g = min_val.parent->g + GetCost(cl->cell, min_val.parent->cell);
-           UpdateVertex(cl, options.metrictype);
+           UpdateVertex(cl);
        } else {
            break; //means that this cell is unreachable and there's no need to recount values for it's neighbors
        }
-       for (auto neighbor : GetSuccessors(cl, map, options)) {
+       for (auto neighbor : GetSuccessors(cl, map)) {
            if (neighbor->rhs > cl->g + GetCost(neighbor->cell, cl->cell)) {
                neighbor->parent = cl;
                neighbor->rhs = cl->g + GetCost(neighbor->cell, cl->cell);
-               UpdateVertex(neighbor, options.metrictype);
+               UpdateVertex(neighbor);
            }
            if (neighbor->cell.x == cl->cell.x || neighbor->cell.y == cl->cell.y) {
-               Node min_val = GetMinPredecessor(neighbor, map, options);
+               Node min_val = GetMinPredecessor(neighbor, map);
                if (!min_val.parent) { //means that neighbor is now unreachable
                    OPEN.remove_if(neighbor);
                    if(neighbor->cell == goal->cell) { //means that goal became unreachable
@@ -150,12 +161,12 @@ LPASearchResult DLian::FindThePath(Map &map, EnvironmentOptions options)
                } else {
                    neighbor->rhs = min_val.rhs;
                    neighbor->parent = min_val.parent;
-                   UpdateVertex(neighbor, options.metrictype);
+                   UpdateVertex(neighbor);
                }
            }
        }
     }
-    if(!ComputeShortestPath(map, options)){
+    if(!ComputeShortestPath(map)){
         current_result.pathfound = false;
         current_result.pathlength = 0;
         end = std::chrono::system_clock::now();
@@ -193,20 +204,14 @@ void DLian::update(const Node* current_node, Node new_node, bool &successors, co
         NODES.insert({new_node.convolution(map.get_width()), new_node});
         node = getFromNodes(new_node, map.get_width(), current_node);
     }
-    node->rhs = std::min(node->rhs, current_node->g + getCost(node->i, node->j, current_node->i, current_node->j));
 
-    if (!(node->IsConsistent())) {
-        new_node->key = CalculateKey(*node);
-        OPEN.put(node); //add vertex u in OPEN list or change it's key if it is already there
-    } else {
-        OPEN.remove_if(node); //if vertex u is in OPEN list, remove it
-    }
+    UpdateVertex(node);
     successors = true;
 }
 
 bool DLian::expand(const Node* curNode, const Map &map) {
     bool successors_are_fine = false;
-    auto parent = &(NODES.find(curNode->convolution(map.get_width()))->second);
+    auto parent = getFromNodes(curNode, map.get_width(), curNode->parent);
     if (curNode->parent != nullptr) {
         int node_straight_ahead = (int)round(curNode->angle * circle_nodes.size() / 360) % circle_nodes.size();
         double angle = fabs(curNode->angle - circle_nodes[node_straight_ahead].heading);
@@ -218,7 +223,7 @@ bool DLian::expand(const Node* curNode, const Map &map) {
                 newNode.angle = circleNodes[current_distance][node_straight_ahead].heading;
                 newNode.radius = curNode.radius;
                 //newNode.parent = parent;
-
+                newNode.rhs = curNode->g + getCost(newNode.i, newNode.j, curNode->i, curNode->j);
                 update(parent, newNode, successors_are_fine, map);
              }
         } // now we will expand neighbors that are closest to the node that lies straight ahead
@@ -243,7 +248,7 @@ bool DLian::expand(const Node* curNode, const Map &map) {
                     newNode.angle = circle_nodes[cand].heading;
                     newNode.radius = curNode->radius;
                     //newNode.parent = parent;
-
+                    newNode.rhs = curNode->g + getCost(newNode.i, newNode.j, curNode->i, curNode->j);
                     update(curNode, newNode, successors_are_fine, map);
                 } else {
                     if (cand == candidates[0]) limit1 = false;
@@ -265,7 +270,7 @@ bool DLian::expand(const Node* curNode, const Map &map) {
             newNode.radius = curNode.radius;
             newNode.angle = circleNodes[current_distance][angle_position].heading;
             //newNode.parent = parent;
-
+            newNode.rhs = curNode->g + getCost(newNode.i, newNode.j, curNode->i, curNode->j);
             update(curNode, newNode, successors_are_fine, map);
         }
     }
@@ -306,159 +311,247 @@ bool DLian::ComputeShortestPath(Map &map)
             }*/
         } else {
             current->g = std::numeric_limits<double>::infinity();
-            std::vector<Node* > succ = GetSurroundings(current, map);
+            std::vector<Node* > succ = GetSuccessors(current, map);
             succ.push_back(current);
             for (auto elem : succ) {
-                if (!(elem->i == start->i && elem->j == start->j) && elem->parent == current) {
+
+                if (!(elem->i == start->i && elem->j == start->j) &&
+                    !(elem->parent->i == start->i && elem->parent->j == start->j) && elem->parent == current) {
 
                    //RESET PARENT
-                    Node min_val = GetMinPredecessor(elem, map, opt);
-                    elem->rhs = min_val.rhs;
-                    elem->parent = min_val.parent;
+                    ResetParent(elem, current, map);
                 }
                 UpdateVertex(elem);
             }
         }
     }
+    current_result.nodescreated = NODES.size();
+    current_result.numberofsteps = number_of_steps;
     if (goal->g != std::numeric_limits<double>::infinity()) { //if path exists
         current_result.pathfound = true;
-        current_result.numberofsteps = number_of_steps;
-        current_result.nodescreated = NODES.size();
         current_result.pathlength = goal->g;
-        MakePrimaryPath(goal); //build path from parent pointers
-        current_result.lppath = &path;
-        //map.PrintPath(path); //can use this function to build path in console
+        makePrimaryPath(goal);
+        if (postsmoother) hppath = smoothPath(hppath, map);
+        current_result.hppath = hppath;
+        makeSecondaryPath();
+        current_result.lppath = lppath;
+        current_result.max_angle = makeAngles();
+        current_result.angles = angles;
+        current_result.sections = hppath.size() - 1;
         return true;
     }
     return false;
 }
 
-//function returns "dummy" Node for current Node, that consists of parent - predecessor with the best(minimum)
-//cost of getting from it to the current and rhs - this best(minimum) cost.
-//when current node has no predecessors function returns parent=nullptr - which means that current vertex is now unreachable
-Node DLian::GetMinPredecessor(Node* current, Map &map, EnvironmentOptions opt) {
-    std::vector<Node *> all_neighbors = GetSuccessors(current, map, opt);
-    Node dummy_current; //"dummy" for current, we will use only parent and rhs
-    Node* neighbor; //neighbour of current node, we will be looking for neighbour with minimal cost from it to current
-    if (!all_neighbors.empty()) {
-        neighbor = all_neighbors.front();
-        dummy_current.rhs = std::numeric_limits<double>::infinity(); //setting parameters for "dummy"
-        dummy_current.parent = neighbor; //setting parameters for "dummy"
-        for (auto n: all_neighbors) {
-            if (dummy_current.rhs > n->g + GetCost(n->cell, current->cell)) {
-                dummy_current.rhs = n->g + GetCost(n->cell, current->cell);
-                dummy_current.parent = n;
+
+void DLian::ResetParent(Node* current, Node* parent, const LocalMap &map) {
+    bool parent_found = false;
+    int node_straight_behind = circle_nodes.size() - (int)round(parent->angle * circle_nodes.size() / 360) % circle_nodes.size();
+    double angle = 360 - fabs(current->angle - circle_nodes[node_straight_behind].heading);
+    if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
+        int new_pos_i = current->i + circle_nodes[node_straight_behind].i;
+        int new_pos_j = current->j + circle_nodes[node_straight_behind].j;
+        if (map.CellOnGrid(new_pos_i, new_pos_j) && map.CellIsTraversable(new_pos_i, new_pos_j)) {
+
+            for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
+                double angle_prev = fabs(parent->angle - node->angle);
+                if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
+                    if (!checkLineSegment(map, *node, *parent)) continue;
+                    if (parent->rhs > node->g + getCost(node->i, node->j, parent->i, parent->j)) {
+                        parent_found = true;
+                        parent->parent = node;
+                        parent->rhs = node->g + getCost(node->i, node->j, parent->i, parent->j);
+                    }
+                }
+            }
+         }
+    }
+
+    std::vector<int> candidates = std::vector<int>{node_straight_behind, node_straight_behind};
+    bool limit1 = true;
+    bool limit2 = true;
+    while (++candidates[0] != --candidates[1] && (limit1 || limit2)) { // untill the whole circle is explored or we exessed anglelimit somewhere
+        if (candidates[0] >= circle_nodes.size()) candidates[0] = 0;
+        if (candidates[1] < 0) candidates[1] = circle_nodes.size() - 1;
+
+        for (auto cand : candidates) {
+            double angle = 360 - fabs(current->angle - circle_nodes[cand].heading);
+            if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
+                int new_pos_i = parent->i + circle_nodes[cand].i;
+                int new_pos_j = parent->j + circle_nodes[cand].j;
+
+                if (!map.CellOnGrid(new_pos_i, new_pos_j)) continue;
+                if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
+
+                for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
+                    double angle_prev = fabs(parent->angle - node->angle);
+                    if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
+                        if (!checkLineSegment(map, *node, *parent)) continue;
+                        if (parent->rhs > node->g + getCost(node->i, node->j, parent->i, parent->j)) {
+                            parent_found = true;
+                            parent->parent = node;
+                            parent->rhs = node->g + getCost(node->i, node->j, parent->i, parent->j);
+                        }
+                    }
+                }
             }
         }
-    } else {
-        dummy_current.parent = nullptr; //means that current vertex is now unreachable
     }
-    return dummy_current;
+    if (!parent_found) {
+        parent->rhs = std::numeric_limits<float>::infinity();
+        parent->parent = nullptr;
+    }
+    current->rhs = parent->rhs + getCost(current->i, current->j, parent->i, parent->j);
 }
 
 //function returns Nodes of successors of current vertex. Already with their g- and rhs-values
-std::vector<Node* > DLian::GetSuccessors(Node* current, Map &map, EnvironmentOptions opt) {
+std::vector<Node* > DLian::GetSuccessors(Node* current, Map &map) {
     std::vector<Node*> result;
-    for(auto elem : FindNeighbors(current, map, opt)) {
-        if(!NODES.count(vertex(elem, map.get_height()))) { //if vertex wasn't previously examined
-            NODES[vertex(elem, map.get_height())] = Node(elem, current);
+    if (current->parent != nullptr) {
+        int node_straight_ahead = (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size();
+        double angle = fabs(current->angle - circle_nodes[node_straight_ahead].heading);
+        if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
+            int new_pos_i = current->i + circle_nodes[node_straight_ahead].i;
+            int new_pos_j = current->j + circle_nodes[node_straight_ahead].j;
+            if (map.CellOnGrid(new_pos_i, new_pos_j) && map.CellIsTraversable(new_pos_i, new_pos_j)) {
+                Node* succ = getFromNodes(Node(new_pos_i, new_pos_j), map.get_width(), current);
+                if (succ) result.push_back(succ);
+             }
         }
-        result.push_back(&(NODES.find(vertex(elem, map.get_height()))->second));
-    }
-    return result;
-}
 
-//function returns list of map neighbors to the current node depending on the environmental conditions
-std::list<Cell> DLian::FindNeighbors(Node* n, Map &map, EnvironmentOptions opt) const {
-    Cell new_cell;
-    Cell curNode = n->cell;
-    std::list<Cell> successors;
-    for (int i = -1; i <= +1; i++) {
-        for (int j = -1; j <= +1; j++) {
-            if ((i != 0 || j != 0) && map.CellOnGrid(Cell(curNode.x + j, curNode.y + i)) &&
-                    (map.CellIsTraversable(Cell(curNode.x + j, curNode.y + i)))) {
-                if (i != 0 && j != 0) {
-                    if (!opt.allowdiagonal)
-                        continue;
-                    else if (!opt.cutcorners) {
-                        if (map.CellIsObstacle(Cell(curNode.x + j, curNode.y)) ||
-                                map.CellIsObstacle(Cell(curNode.x, curNode.y + i)))
-                            continue;
-                    }
-                    else if (!opt.allowsqueeze) {
-                        if (map.CellIsObstacle(Cell( curNode.x + j, curNode.y)) &&
-                                map.CellIsObstacle(Cell( curNode.x, curNode.y + i)))
-                            continue;
-                    }
-                }
-                new_cell = Cell(curNode.x + j, curNode.y + i);
-                successors.push_front(new_cell);
-            }
-        }
-    }
-    return successors;
-}
+        std::vector<int> candidates = std::vector<int>{node_straight_ahead, node_straight_ahead};
+        bool limit1 = true;
+        bool limit2 = true;
+        while (++candidates[0] != --candidates[1] && (limit1 || limit2)) { // untill the whole circle is explored or we exessed anglelimit somewhere
+            if (candidates[0] >= circle_nodes.size()) candidates[0] = 0;
+            if (candidates[1] < 0) candidates[1] = circle_nodes.size() - 1;
 
-//function returns surroundings - neighbors of the current cell, but not depending on envinonmental options (cutcorners, allowsqueeze)
-std::list<Node*> DLian::GetSurroundings(Node *current, Map &map, EnvironmentOptions opt) {
-    std::list<Node> result1;
-    int x = current->cell.x;
-    int y = current->cell.y;
-    if(opt.allowdiagonal) {
-        for (int k = y - 1; k <= y + 1; ++k) {
-            for (int l = x - 1; l <= x + 1; ++l) {
-                if (!(k == y && l == x) && map.CellOnGrid(Cell(l, k)) && map.CellIsTraversable(Cell(l, k))) {
-                    result1.push_front(Node(Cell(l, k)));
+            for (auto cand : candidates) {
+                double angle = fabs(current->angle - circle_nodes[cand].heading);
+                if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
+                    int new_pos_i = current->i + circle_nodes[cand].i;
+                    int new_pos_j = current->j + circle_nodes[cand].j;
+
+                    if (!map.CellOnGrid(new_pos_i, new_pos_j)) continue;
+                    if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
+
+                    Node* succ = getFromNodes(Node(new_pos_i, new_pos_j), map.get_width(), current);
+                    if (succ) result.push_back(succ);
+                } else {
+                    if (cand == candidates[0]) limit1 = false;
+                    else limit2 = false;
                 }
             }
         }
-    } else {
-        for (int k = x - 1; k <= x + 1; ++k)
-            if (k != x && map.CellOnGrid(Cell(k, y)) && map.CellIsTraversable(Cell(k, y)))
-                result1.push_front(Node(Cell(k, y)));
-        for (int l = y - 1; l <= y + 1; ++l)
-            if (l != y && map.CellOnGrid(Cell(x, l)) && map.CellIsTraversable(Cell(x, l)))
-                result1.push_front(Node(Cell(x, l)));
+    } else { // when we do not have parent, we should explore all neighbors
+        int angle_position(-1), new_pos_i, new_pos_j;
+        for (auto node : circle_nodes) {
+            new_pos_i = current->i + node.i;
+            new_pos_j = current->j + node.j;
+            angle_position++;
+
+            if (!map.CellOnGrid(new_pos_i, new_pos_j)) continue;
+            if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
+
+            Node* succ = getFromNodes(Node(new_pos_i, new_pos_j), map.get_width(), current);
+            if (succ) result.push_back(succ);
+        }
     }
-    std::list<Node*> result;
-    for(auto elem : result1) {
-        if(!NODES.count(vertex(elem.cell, map.get_height()))) { //if vertex wasn't previously examined
-            continue;
-        } else {
-            result.push_back(&(NODES.find(vertex(elem.cell, map.get_height()))->second));
+
+    // when we are near goal point, we should try to reach it
+    if (getCost(current.i, current.j, map.goal_i, map.goal_j) <= current->radius) {
+        double angle = calcAngle(*current->parent, *current, *goal);
+
+        if (fabs(angle * 180 / CN_PI_CONSTANT) <= angleLimit) {
+            Node* succ = getFromNodes(Node(new_pos_i, new_pos_j), map.get_width(), current);
+            if (succ) result.push_back(succ);
         }
     }
     return result;
 }
 
-void DLian::MakePrimaryPath(Node *curNode) //build path by cells
-{
-    path.clear();
-    Node current = *curNode;
-    while (current.parent) {
-        path.push_front(current);
-        current = *current.parent;
-    }
-    path.push_front(current);
+void DLian::makePrimaryPath(Node* curNode) {
+    hppath.push_front(*curNode);
+    curNode = *curNode->parent;
+    do {
+        hppath.push_front(curNode);
+        curNode = *curNode->parent;
+
+    } while (curNode->parent != nullptr);
+    hppath.push_front(*curNode);
 }
 
-void DLian::makeSecondaryPath() //build path by sections
-{
-    std::list<Node>::const_iterator iter = path.begin();
-    int curI, curJ, nextI, nextJ, moveI, moveJ;
-    hpath.push_back(*iter);
-    while (iter != --path.end()) {
-        curI = iter->cell.y;
-        curJ = iter->cell.x;
-        ++iter;
-        nextI = iter->cell.y;
-        nextJ = iter->cell.x;
-        moveI = nextI - curI;
-        moveJ = nextJ - curJ;
-        ++iter;
-        if ((iter->cell.y - nextI) != moveI || (iter->cell.x - nextJ) != moveJ)
-            hpath.push_back(*(--iter));
-        else
-            --iter;
+bool DLian::checkAngle(const Node &dad, const Node &node, const Node &son) const {
+    double angle = calcAngle(dad, node, son) * 180 /  CN_PI_CONSTANT;
+    if (fabs(angle) <= angleLimit) {
+        return true;
     }
+    return false;
+}
+
+
+std::list<Node> DLian::smoothPath(const std::list<Node>& path, const Map& map) {
+    std::list<Node> new_path;
+    sresult.pathlength = 0;
+    auto it = path.begin();
+    auto curr_it = path.begin();
+    Node start_section = path.front();
+    Node end_section = path.front();
+    bool first = true;
+    Node previous = *it++;
+    while (end_section != path.back()) {
+        for (it; it != path.end(); ++it) {
+            auto next = ++it;
+            --it;
+            if (!first && !checkAngle(previous, start_section, *it)) continue;
+            if ((next != path.end() && checkAngle(start_section, *it, *next) ||
+                 next == path.end()) && checkLineSegment(map, start_section, *it)) {
+                end_section = *it;
+                curr_it = it;
+            }
+        }
+        sresult.pathlength += (double)getCost(previous.i, previous.j, start_section.i, start_section.j);
+        new_path.push_back(start_section);
+        previous = start_section;
+        first = false;
+        start_section = end_section;
+        it = ++curr_it;
+    }
+    sresult.pathlength += (double)getCost(previous.i, previous.j, end_section.i, end_section.j);
+    new_path.push_back(end_section);
+    return new_path;
+}
+
+void DLian::makeSecondaryPath() {
+    std::vector<Node> lineSegment;
+    auto it = hppath.begin();
+    Node parent = *it++;
+    while (it != hppath.end()) {
+        calculateLineSegment(lineSegment, parent, *it);
+        std::reverse(std::begin(lineSegment), std::end(lineSegment));
+        lppath.insert(lppath.begin(), ++lineSegment.begin(), lineSegment.end());
+        parent = *it++;
+    }
+    lppath.push_front(hppath.back());
+    std::reverse(std::begin(lppath), std::end(lppath));
+}
+
+
+double DLian::makeAngles() {
+    angles.clear();
+    double max_angle = 0;
+    sresult.accum_angle = 0;
+    auto pred = hppath.begin();
+    auto current = ++hppath.begin();
+    auto succ = ++(++hppath.begin());
+
+    while(succ != hppath.end()) {
+        double angle = calcAngle(*pred++, *current++, *succ++);
+        angle = angle * 180 / CN_PI_CONSTANT;
+        if (angle > max_angle) max_angle = angle;
+        sresult.accum_angle += angle;
+        angles.push_back(angle);
+    }
+    std::reverse(std::begin(angles), std::end(angles));
+    return max_angle;
 }

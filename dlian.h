@@ -5,7 +5,6 @@
 #include "openlist.h"
 #include "searchresult.h"
 #include "heuristics.h"
-#include "environmentoptions.h"
 #include <unordered_map>
 #include <set>
 #include <chrono>
@@ -18,7 +17,7 @@ public:
     ~DLian(void);
 
     //main function for the whole pathbuilding algorithm
-    LPASearchResult FindThePath(Map &map, EnvironmentOptions options);
+    SearchResult FindThePath(Map &map);
 
 private:
     float angleLimit;
@@ -27,12 +26,15 @@ private:
     Node *goal;
     int number_of_steps;
     double hweight;
+    bool postsmoother; // Smoothing the path after the algorithm
 
     //EnvironmentOptions opt;
-    std::list<Node> path;
-    std::list<Node> hpath;
+    std::list<Node> hppath;
+    std::list<Node> lppath;
 
-    LPASearchResult current_result;
+    std::vector<float> angles;
+
+    SearchResult current_result;
     std::vector<circleNode> circle_nodes;
     OpenList OPEN;
     std::unordered_multimap<int, Node> NODES;
@@ -43,19 +45,26 @@ private:
     void UpdateVertex(Node* node);
 
     void update(const Node* current_node, Node new_node, bool &successors, const Map &map);
+    bool expand(const Node* curNode, const Map &map);
 
     bool ComputeShortestPath(Map &map);
     double GetCost(Cell from, Cell to) const;
     Key CalculateKey(Node &vertex);
+
     Node* getFromNodes(Node current_node, int width, Node *parent=nullptr);
-    std::vector<Node *> GetSuccessors(Node *curr, Map &map, EnvironmentOptions opt);
-    std::list<Node *> GetSurroundings(Node *current, Map &map, EnvironmentOptions opt);
-    Node GetMinPredecessor(Node* curr, Map &map, EnvironmentOptions opt);
-    std::list<Cell> FindNeighbors(Node* curr, Map &map, EnvironmentOptions opt) const;
+    std::list<Node*> getAllNodes(Node current_node, int width);
+    void ResetParent(Node* current, Node *parent, const LocalMap &map);
+
+    std::vector<Node *> GetSuccessors(Node *curr, Map &map);
+
+    bool checkAngle(const Node &dad, const Node &node, const Node &son) const;
+    std::list<Node> smoothPath(const std::list<Node>& path, const Map& map);
 
     //functions for path building
-    void MakePrimaryPath(Node* curNode);
+    void makePrimaryPath(Node* curNode);
     void makeSecondaryPath();
+
+    double makeAngles();
 };
 
 #endif // DLIAN_H
