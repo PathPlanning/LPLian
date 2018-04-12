@@ -4,6 +4,11 @@
 #define CN_PI_CONSTANT 3.14159265359
 #define CN_SQRT_TWO    1.41421356237
 
+//Default values of parameters
+
+#define CN_PTD_AL       30
+#define CN_PTD_D        4
+
 //XML tags
 #define CNS_TAG_ROOT "root"
 
@@ -27,6 +32,10 @@
         #define CNS_TAG_AD          "allowdiagonal"
         #define CNS_TAG_CC          "cutcorners"
 
+        #define CNS_TAG_DI          "distance"
+        #define CNS_TAG_AL          "anglelimit"
+        #define CNS_TAG_PS          "postsmoothing"
+
     #define CNS_TAG_OPT             "options"
         #define CNS_TAG_LOGLVL      "loglevel"
         #define CNS_TAG_LOGPATH     "logpath"
@@ -36,6 +45,8 @@
         #define CNS_TAG_MAPFN       "mapfilename"
         #define CNS_TAG_SUM         "summary"
         #define CNS_TAG_PATH        "path"
+        #define CNS_TAG_ANGLES      "angles"
+        #define CNS_TAG_ANGLE       "angle"
         #define CNS_TAG_LPLEVEL     "lplevel"
         #define CNS_TAG_HPLEVEL     "hplevel"
             #define CNS_TAG_SECTION "section"
@@ -52,8 +63,9 @@
     #define CNS_TAG_ATTR_LENGTH_SCALED  "length_scaled"
     #define CNS_TAG_ATTR_TIME           "time"
 
-    #define CNS_TAG_ATTR_ALENGTH        "astar_length"
-    #define CNS_TAG_ATTR_ACORRECT       "astar_correct"
+    #define CNS_TAG_ATTR_MAXANGLE       "max_angle"
+    #define CNS_TAG_ATTR_ACCUMANGLE     "accum_angle"
+
     #define CNS_TAG_ATTR_X              "x"
     #define CNS_TAG_ATTR_Y              "y"
     #define CNS_TAG_ATTR_NUM            "number"
@@ -68,24 +80,11 @@
 
 
 //Search Parameters
-    #define CN_SP_ST 0
+    #define CN_SP_AL 0 //AngleLimit
 
-        #define CNS_SP_ST_BFS           "bfs"
-        #define CNS_SP_ST_DIJK          "dijkstra"
-        #define CNS_SP_ST_ASTAR         "astar"
-        #define CNS_SP_ST_JP_SEARCH     "jp_search"
-        #define CNS_SP_ST_TH            "theta"
-        #define CN_SP_ST_JPASTAR        "jpastar"
+    #define CN_SP_DI 1 //Distance
 
-        #define CN_SP_ST_BFS            0
-        #define CN_SP_ST_DIJK           1
-        #define CN_SP_ST_ASTAR          2
-        #define CN_SP_ST_JP_SEARCH      3
-        #define CN_SP_ST_TH             4
-
-    #define CN_SP_AD 1 //AllowDiagonal
-
-    #define CN_SP_CC 2 //CutCorners
+    #define CN_SP_PS 2 //Postsmoothing
 
     #define CN_SP_AS 3 //AllowSqueeze
 

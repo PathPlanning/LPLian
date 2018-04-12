@@ -31,10 +31,9 @@
     </map>
     <algorithm>
         <hweight>1</hweight>
-        <metrictype>euclid</metrictype>
-        <allowdiagonal>true</allowdiagonal>
-        <allowsqueeze>true</allowsqueeze>
-        <cutcorners>false</cutcorners>
+        <anglelimit>45</anglelimit>
+        <distance>2</distance>
+        <postsmoothing>false</postsmoothing>
     </algorithm>
     <options>
         <loglevel>1</loglevel>

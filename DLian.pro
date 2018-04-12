@@ -1,11 +1,14 @@
 TEMPLATE = app
-CONFIG += console c++11
-CONFIG -= app_bundle
-CONFIG -= qt
+CONFIG   += console
+CONFIG   -= app_bundle
+QMAKE_CXXFLAGS += -std=c++0x
+TEMPLATE = app
+win32 {
+QMAKE_LFLAGS += -static -static-libgcc -static-libstdc++
+}
 
 SOURCES += main.cpp \
     config.cpp \
-    environmentoptions.cpp \
     map.cpp \
     mission.cpp \
     tinyxml2.cpp \
@@ -16,7 +19,6 @@ SOURCES += main.cpp \
 HEADERS += \
     config.h \
     gl_const.h \
-    heuristics.h \
     map.h \
     mission.h \
     node.h \
@@ -25,5 +27,6 @@ HEADERS += \
     tinyxml2.h \
     xmllogger.h \
     logger.h \
-    dlian.h
+    dlian.h \
+    linefunctions.h
 

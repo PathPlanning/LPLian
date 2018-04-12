@@ -5,7 +5,7 @@
 #include "tinyxml2.h"
 #include "tinyxml2.h"
 
-#include <vector>
+#include <list>
 
 class OpenList {
 
@@ -24,11 +24,14 @@ public:
     Node* get();
     bool top_key_less_than(Key cur_key);
     void remove_if(Node* item);
+    void remove_all(Node item);
+
+    void print_elements() const;
 
     tinyxml2::XMLElement *writeToXml(tinyxml2::XMLElement * element, tinyxml2::XMLNode *child) const;
 
 private:
-    std::list<Node*> *elements;
+    std::vector<std::list<Node*>> elements;
     int top_coord;
     size_t size;
     size_t height;

@@ -1,5 +1,4 @@
 #include "mission.h"
-#include "astar.h"
 #include "xmllogger.h"
 #include "gl_const.h"
 
@@ -7,14 +6,12 @@ Mission::Mission()
 {
     logger = nullptr;
     fileName = nullptr;
-    LPAmatchesA = false;
 }
 
 Mission::Mission(const char *FileName)
 {
     fileName = FileName;
     logger = nullptr;
-    LPAmatchesA = false;
 }
 
 Mission::~Mission()
@@ -40,75 +37,46 @@ bool Mission::createLog()
     return logger->getLog(fileName, config.LogParams);
 }
 
-void Mission::createEnvironmentOptions()
-{
-    if (config.SearchParams[CN_SP_ST] == CN_SP_ST_BFS || config.SearchParams[CN_SP_ST] == CN_SP_ST_DIJK) {
-
-        options = EnvironmentOptions(config.SearchParams[CN_SP_AS], config.SearchParams[CN_SP_AD],
-                                     config.SearchParams[CN_SP_CC]);
-
-    }
-
-    else
-        options = EnvironmentOptions(config.SearchParams[CN_SP_AS], config.SearchParams[CN_SP_AD],
-                                     config.SearchParams[CN_SP_CC], config.SearchParams[CN_SP_MT]);
-}
-
 void Mission::createSearch()
 {
-    lpasearch = LPAstar(config.SearchParams[CN_SP_HW]);
-    search = Astar(config.SearchParams[CN_SP_HW], config.SearchParams[CN_SP_BT]);
+    dliansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
+                        (bool)config.SearchParams[CN_SP_PS]);
 }
 
 void Mission::startSearch()
 {
-    lparesult = lpasearch.FindThePath(map, options);
-    if (!lparesult.goal_became_unreachable) {
-        sr = search.startSearch(logger, map, options);
-        if (!lparesult.pathfound && !sr.pathfound) {
-            LPAmatchesA = true;
-            std::cout << "For both LPAstar and Astar algorithms path does not exist\n";
-        }
-        if (lparesult.pathlength == sr.pathlength) {
-            LPAmatchesA = true;
-            std::cout << "LPAstar is correct: LPAstar path length matches Astar path length\n";
-        }
-    } else {
-        LPAmatchesA = true;
+    sr = dliansearch.FindThePath(map);
+    if (sr.pathfound) {
+        std::cout << "DLIAN has found the path\n";
     }
-
 }
 
 void Mission::printSearchResultsToConsole()
 {
-    std::cout << "LPApath ";
-    if (!lparesult.pathfound)
-        std::cout << "NOT ";
-    std::cout << "found!" << std::endl;
-    std::cout << "Apath ";
+    std::cout << "DLian path ";
     if (!sr.pathfound)
         std::cout << "NOT ";
     std::cout << "found!" << std::endl;
 
-    std::cout << "numberofsteps: LPAstar=" << lparesult.numberofsteps << ", Astar=" << sr.numberofsteps << std::endl;
-    std::cout << "nodescreated: LPAstar=" << lparesult.nodescreated << ", Astar=" << sr.nodescreated << std::endl;
+    std::cout << "numberofsteps: " << sr.numberofsteps << std::endl;
+    std::cout << "nodescreated: " << sr.nodescreated << std::endl;
 
-    if (sr.pathfound && lparesult.pathfound) {
-        std::cout << "pathlength: LPAstar="  << lparesult.pathlength << ", Astar=" << sr.pathlength << std::endl;
-        std::cout << "pathlength_scaled: LPAstar=" <<  lparesult.pathlength * map.get_cellsize() << ", Astar=" <<  sr.pathlength * map.get_cellsize() << std::endl;
+    if (sr.pathfound) {
+        std::cout << "pathlength: " << sr.pathlength << std::endl;
+        std::cout << "pathlength_scaled: " <<  sr.pathlength * map.get_cellsize() << std::endl;
     }
-    std::cout << "time: LPAstar=" << lparesult.time << ", Astar=" <<  sr.time << std::endl;
+    std::cout << "time: " <<  sr.time << std::endl;
 }
 
 void Mission::saveSearchResultsToLog()
 {
-    logger->writeToLogSummary(lparesult.numberofsteps, lparesult.nodescreated, lparesult.pathlength, lparesult.time, map.get_cellsize(), sr.pathlength, LPAmatchesA);
-    if (lparesult.pathfound) {
-        logger->writeToLogPath(*lparesult.lppath);
-        logger->writeToLogHPpath(*lparesult.hppath);
-        logger->writeToLogMap(map, *lparesult.lppath, true);
+    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, map.get_cellsize());
+    if (sr.pathfound) {
+        logger->writeToLogPath(sr.lppath);
+        logger->writeToLogHPpath(sr.hppath);
+        logger->writeToLogMap(map, sr.lppath, true);
     } else {
-        logger->writeToLogMap(map, *lparesult.lppath, false);
+        logger->writeToLogMap(map, sr.lppath, false);
         logger->writeToLogNotFound();
     }
     logger->saveLog();

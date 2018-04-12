@@ -16,7 +16,7 @@ public:
 
     void writeToLogMap(const Map &Map, const std::list<Node> &path, bool pathfound);
 
-    void writeToLogOpenClose(const std::vector<std::list<ANode>> &open, const std::unordered_map<int, ANode> &close, bool last);
+    void writeToLogOpenClose(const OpenList &open, const std::unordered_multimap<int, Node> &close, bool last);
 
     void writeToLogPath(const std::list<Node> &path);
 
@@ -24,7 +24,7 @@ public:
 
     void writeToLogNotFound();
 
-    void writeToLogSummary(unsigned int numberofsteps, unsigned int nodescreated, float length, double time, double cellSize, float alength, bool acorrect);
+    void writeToLogSummary(unsigned int numberofsteps, unsigned int nodescreated, float length, double time, double cellSize);
 
 private:
     std::string LogFileName;

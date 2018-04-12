@@ -2,12 +2,15 @@
 #define NODE_H
 
 #include <memory>
+#include <limits>
 #include <stdlib.h>
 #include <algorithm>
 #include <vector>
 #include <map>
 #include <cmath>
 #include <iostream>
+
+#include "gl_const.h"
 
 struct circleNode
 {
@@ -61,7 +64,7 @@ public:
     int   radius;
     double angle;
 
-    Node() : i(-1), j(-1), F(std::numeric_limits<float>::infinity()), g(std::numeric_limits<float>::infinity()), rhs(std::numeric_limits<float>::infinity()),
+    Node() : i(-1), j(-1), g(std::numeric_limits<float>::infinity()), rhs(std::numeric_limits<float>::infinity()),
              parent(nullptr), radius(CN_PTD_D), angle(0) {}
 
     Node(int x, int y,  Node *parent_=nullptr, float g_=std::numeric_limits<float>::infinity(), float rhs_ = std::numeric_limits<float>::infinity(),
@@ -76,8 +79,8 @@ public:
     inline Node& operator=(const Node& other) {
         i = other.i;
         j = other.j;
-        F = other.F;
         g = other.g;
+        rhs = other.rhs;
         parent = other.parent;
         angle = other.angle;
         radius = other.radius;
@@ -103,7 +106,7 @@ public:
 };
 
 inline std::ostream& operator<< (std::ostream& out, const Node &next) {
-    out << "(" << next.cell.x << "," << next.cell.y << "); ";
+    out << "(" << next.i<< "," << next.j << "); ";
     return out;
 }
 

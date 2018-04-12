@@ -2,7 +2,6 @@
 #define	MAP_H
 #include <iostream>
 #include "node.h"
-#include "environmentoptions.h"
 #include "gl_const.h"
 #include <list>
 #include "searchresult.h"
@@ -43,7 +42,7 @@ class Map
         int **  Grid;
 
         void    BuildGrid();
-        int     damaged;
+        Node     damaged;
         int     height, width;
         double  CellSize;
 

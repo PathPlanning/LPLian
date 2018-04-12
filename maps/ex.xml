@@ -20,11 +20,9 @@
 	</grid>
     </map>
     <algorithm>
-        <hweight>1</hweight>
-        <metrictype>euclid</metrictype>
-        <allowdiagonal>true</allowdiagonal>
-        <allowsqueeze>false</allowsqueeze>
-        <cutcorners>true</cutcorners>
+        <anglelimit>180</anglelimit>
+        <distance>1</distance>
+        <postsmoothing>false</postsmoothing>
     </algorithm>
     <options>
         <loglevel>1</loglevel>

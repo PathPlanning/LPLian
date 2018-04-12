@@ -4,8 +4,8 @@
 #include "node.h"
 
 struct Changes {
-    std::list<Cell> occupied;
-    std::list<Cell> cleared;
+    std::list<Node> occupied;
+    std::list<Node> cleared;
 };
 
 struct SearchResult {

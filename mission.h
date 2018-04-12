@@ -5,8 +5,6 @@
 #include "config.h"
 #include "logger.h"
 #include "searchresult.h"
-#include "environmentoptions.h"
-#include "astar.h"
 #include "dlian.h"
 #include "xmllogger.h"
 
@@ -21,7 +19,6 @@ class Mission
         bool getConfig();
         bool createLog();
         void createSearch();
-        void createEnvironmentOptions();
         void startSearch();
         void printSearchResultsToConsole();
         void saveSearchResultsToLog();
@@ -31,14 +28,10 @@ class Mission
 
         Map                     map;
         Config                  config;
-        EnvironmentOptions      options;
-        LPAstar                 lpasearch;
-        Astar                   search;
+        DLian                   dliansearch;
         ILogger*                logger;
         const char*             fileName;
         SearchResult            sr;
-        LPASearchResult         lparesult;
-        bool                    LPAmatchesA;
 };
 
 #endif

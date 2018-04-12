@@ -4,8 +4,10 @@ Map::Map()
 {
     height = -1;
     width = -1;
-    start = Cell(-1,-1);
-    goal = Cell(-1,-1);
+    start_i = -1;
+    start_j = -1;
+    goal_i = -1;
+    goal_j = -1;
     Grid = NULL;
     CellSize = 1;
 }
@@ -60,12 +62,57 @@ double Map::get_cellsize() const {
     return CellSize;
 }
 
+Changes Map::DamageTheMap(std::list<Node> path)
+{
+    Changes result;
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_int_distribution<int> uni(4, path.size() - 4);
+
+    auto random_number = uni(rng); //create random number to damage random part of the path
+    //int random_number = 4;
+    int i = 0;
+    Node crash = path.front();
+    auto it = path.begin();
+    while (it != path.end()) {
+        if (i++ == random_number) {
+            crash = *it;
+            break;
+        }
+        ++it;
+    }
+
+    int x = crash.j;
+    int y = crash.i;
+    damaged = crash;
+    for (int k = y - 1; k <= y + 1; ++k) {
+        for (int l = x - 1; l <= x + 1; ++l) {
+            if (CellOnGrid(k, l) && CellIsTraversable(k, l) && k != goal_i && l != goal_j && k != start_i && l != start_j) {
+                result.occupied.push_back(Node(k, l));
+                Grid[k][l] = CN_GC_OBS;
+            }
+        }
+    }
+
+    x = crash.j + 1;
+    y = crash.i - 1;
+    for (int k = y - 1; k <= y + 1; ++k) {
+        for (int l = x - 1; l <= x + 1; ++l) {
+            if (CellOnGrid(k, l) && CellIsTraversable(k, l) && k != goal_i && l != goal_j && k != start_i && l != start_j) {
+                result.occupied.push_back(Node(k, l));
+                Grid[k][l] = CN_GC_OBS;
+            }
+        }
+    }
+    return result;
+}
+
 void Map::PrintPath(std::list<Node> path) {
     for (size_t i = 0; i < height; ++i) {
         for (size_t j = 0; j < width; ++j) {
             bool p = false;
             for (auto elem : path) {
-                if (elem_i == i && elem_j = j) {
+                if (elem.i == i && elem.j == j) {
                     std::cout << "* ";
                     p = true;
                     break;
@@ -189,10 +236,10 @@ bool Map::GetMap(const char *FileName)
 
             if (hasSTX) {
                 std::cout << "Warning! Duplicate '" << CNS_TAG_STX << "' encountered." << std::endl;
-                std::cout << "Only first value of '" << CNS_TAG_STX << "' =" << start.x << "will be used." << std::endl;
+                std::cout << "Only first value of '" << CNS_TAG_STX << "' =" << start_j << "will be used." << std::endl;
             }
             else {
-                if (!(stream >> start.x && start.x >= 0 && start.x < width)) {
+                if (!(stream >> start_j && start_j >= 0 && start_j < width)) {
                     std::cout << "Warning! Invalid value of '" << CNS_TAG_STX
                               << "' tag encountered (or could not convert to integer)" << std::endl;
                     std::cout << "Value of '" << CNS_TAG_STX << "' tag should be an integer AND >=0 AND < '"
@@ -213,10 +260,10 @@ bool Map::GetMap(const char *FileName)
 
             if (hasSTY) {
                 std::cout << "Warning! Duplicate '" << CNS_TAG_STY << "' encountered." << std::endl;
-                std::cout << "Only first value of '" << CNS_TAG_STY << "' =" << start.y << "will be used." << std::endl;
+                std::cout << "Only first value of '" << CNS_TAG_STY << "' =" << start_i << "will be used." << std::endl;
             }
             else {
-                if (!(stream >> start.y && start.y >= 0 && start.y < height)) {
+                if (!(stream >> start_i && start_i >= 0 && start_i < height)) {
                     std::cout << "Warning! Invalid value of '" << CNS_TAG_STY
                               << "' tag encountered (or could not convert to integer)" << std::endl;
                     std::cout << "Value of '" << CNS_TAG_STY << "' tag should be an integer AND >=0 AND < '"
@@ -237,10 +284,10 @@ bool Map::GetMap(const char *FileName)
 
             if (hasFINX) {
                 std::cout << "Warning! Duplicate '" << CNS_TAG_FINX << "' encountered." << std::endl;
-                std::cout << "Only first value of '" << CNS_TAG_FINX << "' =" << goal.x << "will be used." << std::endl;
+                std::cout << "Only first value of '" << CNS_TAG_FINX << "' =" << goal_j << "will be used." << std::endl;
             }
             else {
-                if (!(stream >> goal.x && goal.x >= 0 && goal.x < width)) {
+                if (!(stream >> goal_j && goal_j >= 0 && goal_j < width)) {
                     std::cout << "Warning! Invalid value of '" << CNS_TAG_FINX
                               << "' tag encountered (or could not convert to integer)" << std::endl;
                     std::cout << "Value of '" << CNS_TAG_FINX << "' tag should be an integer AND >=0 AND < '"
@@ -261,10 +308,10 @@ bool Map::GetMap(const char *FileName)
 
             if (hasFINY) {
                 std::cout << "Warning! Duplicate '" << CNS_TAG_FINY << "' encountered." << std::endl;
-                std::cout << "Only first value of '" << CNS_TAG_FINY << "' =" << goal.y << "will be used." << std::endl;
+                std::cout << "Only first value of '" << CNS_TAG_FINY << "' =" << goal_i << "will be used." << std::endl;
             }
             else {
-                if (!(stream >> goal.y && goal.y >= 0 && goal.y < height)) {
+                if (!(stream >> goal_i && goal_i >= 0 && goal_i < height)) {
                     std::cout << "Warning! Invalid value of '" << CNS_TAG_FINY
                               << "' tag encountered (or could not convert to integer)" << std::endl;
                     std::cout << "Value of '" << CNS_TAG_FINY << "' tag should be an integer AND >=0 AND < '"
@@ -331,14 +378,14 @@ bool Map::GetMap(const char *FileName)
     if (!(hasFINX && hasFINY && hasSTX && hasSTY))
         return false;
 
-    if (Grid[start.y][start.x] != CN_GC_NOOBS) {
-        std::cout << "Error! Start cell is not traversable (cell's value is" << Grid[start.y][start.x] << ")!"
+    if (Grid[start_i][start_j] != CN_GC_NOOBS) {
+        std::cout << "Error! Start cell is not traversable (cell's value is" << Grid[start_i][start_j] << ")!"
                   << std::endl;
         return false;
     }
 
-    if (Grid[goal.y][goal.x] != CN_GC_NOOBS) {
-        std::cout << "Error! Goal cell is not traversable (cell's value is" << Grid[goal.y][goal.x] << ")!"
+    if (Grid[goal_i][goal_j] != CN_GC_NOOBS) {
+        std::cout << "Error! Goal cell is not traversable (cell's value is" << Grid[goal_i][goal_j] << ")!"
                   << std::endl;
         return false;
     }
