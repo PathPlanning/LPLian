@@ -146,12 +146,17 @@ SearchResult DLian::FindThePath(Map &map)
         std::cout << "THE PATH DOES NOT EXIST ON THE INITIAL MAP\n";
         return current_result;
     }
+    for (auto elem : lppath)
+        std::cout << elem << "->";
+    std::cout << std::endl;
 
     Changes changes = map.DamageTheMap(lppath); //force map to change (sufficient for the correct testing)
+    map.PrintMap();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
+        std::cout << dam << std::endl;
         OPEN.remove_all(dam);
         std::vector<Node *> surr = GetSurroundings(dam, map);
-
+        std::cout << surr[0] << std::endl;
     }
 
     if(!ComputeShortestPath(map)) {
@@ -461,9 +466,14 @@ std::vector<Node* > DLian::GetSurroundings(Node current, Map &map) {
     std::vector<Node *> result;
     for (int i = current.i - 2 * distance; i <= current.i + 2 * distance; ++i) {
         for (int j = current.j - 2 * distance; j <= current.j + 2 * distance; ++j) {
+            if (!map.CellOnGrid(i, j) || map.CellIsObstacle(i, j)) {
+                OPEN.remove_all(Node(i, j));
+                continue;
+            }
             for (auto elem : getAllNodes(Node(i, j), map.get_width())) {
                 if (elem->parent == nullptr || elem->parent->parent == nullptr) continue;
                 std::cout << *elem << *elem->parent << *elem->parent->parent << std::endl;
+                if (map.CellIsObstacle(elem->parent->i, elem->parent->j)) continue;
                 if (checkLineSegment(map, *elem->parent, *elem->parent->parent)) continue;
                 ResetParent(elem, elem->parent, map);
                 UpdateVertex(elem);

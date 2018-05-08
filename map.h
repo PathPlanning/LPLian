@@ -29,6 +29,7 @@ class Map
         const int * operator [] (int i) const;
 
         void PrintPath(std::list<Node> path);
+        void PrintMap();
 
         const int get_height() const;
         const int get_width() const;

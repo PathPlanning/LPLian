@@ -69,8 +69,8 @@ Changes Map::DamageTheMap(std::list<Node> path)
     std::mt19937 rng(rd());
     std::uniform_int_distribution<int> uni(4, path.size() - 4);
 
-    auto random_number = uni(rng); //create random number to damage random part of the path
-    //int random_number = 4;
+    //auto random_number = uni(rng); //create random number to damage random part of the path
+    int random_number = 4;
     int i = 0;
     Node crash = path.front();
     auto it = path.begin();
@@ -87,7 +87,7 @@ Changes Map::DamageTheMap(std::list<Node> path)
     damaged = crash;
     for (int k = y - 1; k <= y + 1; ++k) {
         for (int l = x - 1; l <= x + 1; ++l) {
-            if (CellOnGrid(k, l) && CellIsTraversable(k, l) && k != goal_i && l != goal_j && k != start_i && l != start_j) {
+            if (CellOnGrid(k, l) && CellIsTraversable(k, l) && !(k == goal_i && l == goal_j) && !(k == start_i && l == start_j)) {
                 result.occupied.push_back(Node(k, l));
                 Grid[k][l] = CN_GC_OBS;
             }
@@ -123,6 +123,16 @@ void Map::PrintPath(std::list<Node> path) {
         std::cout << std::endl;
     }
 }
+
+void Map::PrintMap() {
+    for (size_t i = 0; i < height; ++i) {
+        for (size_t j = 0; j < width; ++j) {
+            std::cout << Grid[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
 
 bool Map::GetMap(const char *FileName)
 {
