@@ -35,7 +35,7 @@ bool Map::CellIsTraversable(int curr_i, int curr_j) const
 
 bool Map::CellIsObstacle(int curr_i, int curr_j) const
 {
-    return (Grid[curr_i][curr_j] != CN_GC_NOOBS);
+    return (Grid[curr_i][curr_j] == CN_GC_OBS);
 }
 
 bool Map::CellOnGrid(int curr_i, int curr_j) const
@@ -70,7 +70,7 @@ Changes Map::DamageTheMap(std::list<Node> path)
     std::uniform_int_distribution<int> uni(4, path.size() - 4);
 
     //auto random_number = uni(rng); //create random number to damage random part of the path
-    int random_number = 4;
+    int random_number = (int)(path.size() / 2);
     int i = 0;
     Node crash = path.front();
     auto it = path.begin();
@@ -98,7 +98,7 @@ Changes Map::DamageTheMap(std::list<Node> path)
     y = crash.i - 1;
     for (int k = y - 1; k <= y + 1; ++k) {
         for (int l = x - 1; l <= x + 1; ++l) {
-            if (CellOnGrid(k, l) && CellIsTraversable(k, l) && k != goal_i && l != goal_j && k != start_i && l != start_j) {
+            if (CellOnGrid(k, l) && CellIsTraversable(k, l) && !(k == goal_i && l == goal_j) && !(k == start_i && l == start_j)) {
                 result.occupied.push_back(Node(k, l));
                 Grid[k][l] = CN_GC_OBS;
             }

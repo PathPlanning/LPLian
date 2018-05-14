@@ -47,7 +47,7 @@ bool OpenList::top_key_less_than(Key cur_key) { //compare the minimum key value 
 
 Node* OpenList::get() { //return node wit minimum key value
     Node* best = elements[top_coord].front();
-    if (best->g > best->rhs) elements[top_coord].pop_front();
+    elements[top_coord].pop_front();
     return best;
 }
 
@@ -55,7 +55,7 @@ void OpenList::print_elements() const {
     for (auto elem : elements) {
         if (!elem.empty()) {
             for(auto it = elem.begin(); it != elem.end(); ++it) {
-                std::cout << (**it) << (*it)->key.k1 << " ";
+                std::cout << (**it) << "<-" << *(*it)->parent << (*it)->key.k1 << ' ' << (*it)->key.k2 << " ";
             }
             std::cout << std::endl;
         }

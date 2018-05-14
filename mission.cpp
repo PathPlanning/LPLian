@@ -70,7 +70,7 @@ void Mission::printSearchResultsToConsole()
 
 void Mission::saveSearchResultsToLog()
 {
-    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, map.get_cellsize());
+    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, sr.max_angle, map.get_cellsize());
     if (sr.pathfound) {
         logger->writeToLogPath(sr.lppath);
         logger->writeToLogHPpath(sr.hppath);

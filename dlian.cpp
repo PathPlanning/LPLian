@@ -89,13 +89,20 @@ double calcAngle(const Node &dad, const Node &node, const Node &son) {
 
 Node* DLian::getFromNodes(Node current_node, int width, Node* parent) {
     auto it = NODES.find(current_node.convolution(width));
+    Node* found = nullptr;
     if (it != NODES.end()) {
         auto range = NODES.equal_range(it->first);
-        for (auto it = range.first; it != range.second; ++it)
-            if (it->second.parent == nullptr || (it->second.parent->i == parent->i && it->second.parent->j == parent->j))
+        for (auto it = range.first; it != range.second; ++it) {
+            if (it->second.parent == nullptr) {
+                found =  &(it->second);
+                continue;
+            }
+            if (it->second.parent->i == parent->i && it->second.parent->j == parent->j) {
                 return &(it->second);
+            }
+        }
     }
-    return nullptr;
+    return found;
 }
 
 std::vector<Node*> DLian::getAllNodes(Node current_node, int width) {
@@ -146,17 +153,28 @@ SearchResult DLian::FindThePath(Map &map)
         std::cout << "THE PATH DOES NOT EXIST ON THE INITIAL MAP\n";
         return current_result;
     }
-    for (auto elem : lppath)
+    for (auto elem : hppath)
         std::cout << elem << "->";
     std::cout << std::endl;
 
     Changes changes = map.DamageTheMap(lppath); //force map to change (sufficient for the correct testing)
-    map.PrintMap();
+    //map.PrintMap();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
-        std::cout << dam << std::endl;
         OPEN.remove_all(dam);
-        std::vector<Node *> surr = GetSurroundings(dam, map);
-        std::cout << surr[0] << std::endl;
+    }
+    auto cmp = [](Node* a, Node* b) { return *a < *b; };
+    std::set<Node*, decltype(cmp)> surr(cmp);
+    //std::vector<Node*> surr;
+    for (auto dam : changes.occupied) {
+        std::vector<Node*> new_ = GetSurroundings(dam, map);
+        surr.insert(new_.begin(), new_.end());
+    }
+    for (auto elem : surr) {
+        std::cout << *elem << *elem->parent << ' ';
+        if (elem->parent->parent) std::cout << *elem->parent->parent << std::endl;
+        else std::cout << std::endl;
+        ResetParent(elem, elem->parent, map);
+        if (elem->parent != nullptr) UpdateVertex(elem);
     }
 
     if(!ComputeShortestPath(map)) {
@@ -166,6 +184,9 @@ SearchResult DLian::FindThePath(Map &map)
         std::cout << "AFTER THE FIRST MAP CHANGE THE PATH DOES NOT EXIST\n";
         return current_result;
     }
+    for (auto elem : hppath)
+        std::cout << elem << "->";
+    std::cout << std::endl;
     end = std::chrono::system_clock::now();
     current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
     return current_result;
@@ -187,7 +208,7 @@ void DLian::update(Node* current_node, Node new_node, bool &successors, const Ma
     if (!checkLineSegment(map, *current_node, new_node)) return;
 
     Node* node = getFromNodes(new_node, map.get_width(), current_node);
-    if (node == nullptr) {
+    if (node == nullptr || node->parent == nullptr) {
         NODES.insert({new_node.convolution(map.get_width()), new_node});
         node = getFromNodes(new_node, map.get_width(), current_node);
     }
@@ -284,7 +305,6 @@ bool DLian::ComputeShortestPath(Map &map)
 {
     while (OPEN.top_key_less_than(CalculateKey(*goal)) || goal->rhs != goal->g) {
         ++number_of_steps;
-        //OPEN.print_elements();
         Node* current = OPEN.get(); //returns element from OPEN with smalest key value
 
         if (current->g > current->rhs) {
@@ -300,13 +320,15 @@ bool DLian::ComputeShortestPath(Map &map)
                 UpdateVertex(elem);
             }*/
         } else {
+            //OPEN.print_elements();
             current->g = std::numeric_limits<double>::infinity();
             std::vector<Node* > succ = GetSuccessors(current, map);
             succ.push_back(current);
             for (auto elem : succ) {
-
+                if (elem->parent == nullptr) continue;
                 if (!(elem->i == start->i && elem->j == start->j) &&
-                    !(elem->parent->i == start->i && elem->parent->j == start->j) && elem->parent == current) {
+                    !(elem->parent->i == start->i && elem->parent->j == start->j) &&
+                      elem->parent->i == current->i && elem->parent->j == current->j) {
 
                    //RESET PARENT
                     ResetParent(elem, current, map);
@@ -324,7 +346,7 @@ bool DLian::ComputeShortestPath(Map &map)
         if (postsmoother) hppath = smoothPath(hppath, map);
         current_result.hppath = hppath;
         makeSecondaryPath();
-        map.PrintPath(lppath);
+        //map.PrintPath(lppath);
         current_result.lppath = lppath;
         current_result.max_angle = makeAngles();
         current_result.angles = angles;
@@ -336,22 +358,25 @@ bool DLian::ComputeShortestPath(Map &map)
 
 
 void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
+    if (parent->old_parent != nullptr) parent->old_parent = parent->parent;
     bool parent_found = false;
-    int node_straight_behind = circle_nodes.size() - (int)round(parent->angle * circle_nodes.size() / 360) % circle_nodes.size();
-    double angle = 360 - fabs(current->angle - circle_nodes[node_straight_behind].heading);
+    Node new_parent;
+    int node_straight_behind = (int)(circle_nodes.size() / 2) - (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size();
+    double angle = fabs(current->angle - fabs(180 - circle_nodes[node_straight_behind].heading));
     if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
-        int new_pos_i = current->i + circle_nodes[node_straight_behind].i;
-        int new_pos_j = current->j + circle_nodes[node_straight_behind].j;
+        int new_pos_i = parent->i + circle_nodes[node_straight_behind].i;
+        int new_pos_j = parent->j + circle_nodes[node_straight_behind].j;
         if (map.CellOnGrid(new_pos_i, new_pos_j) && map.CellIsTraversable(new_pos_i, new_pos_j)) {
 
             for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
-                double angle_prev = fabs(parent->angle - node->angle);
+                double angle_prev = fabs(fabs(180 - circle_nodes[node_straight_behind].heading) - node->angle);
                 if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
                     if (!checkLineSegment(map, *node, *parent)) continue;
-                    if (parent->rhs > node->g + getCost(node->i, node->j, parent->i, parent->j)) {
+                    if (parent->rhs > node->rhs + getCost(node->i, node->j, parent->i, parent->j)) {
                         parent_found = true;
-                        parent->parent = node;
-                        parent->rhs = node->g + getCost(node->i, node->j, parent->i, parent->j);
+                        new_parent.parent = node;
+                        new_parent.angle = 180 - circle_nodes[node_straight_behind].heading;
+                        new_parent.rhs = node->rhs + getCost(node->i, node->j, parent->i, parent->j);
                     }
                 }
             }
@@ -361,12 +386,13 @@ void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
     std::vector<int> candidates = std::vector<int>{node_straight_behind, node_straight_behind};
     bool limit1 = true;
     bool limit2 = true;
-    while (++candidates[0] != --candidates[1] && (limit1 || limit2)) { // untill the whole circle is explored or we exessed anglelimit somewhere
+    while (limit1 || limit2) { // untill the whole circle is explored or we exessed anglelimit somewhere
         if (candidates[0] >= circle_nodes.size()) candidates[0] = 0;
         if (candidates[1] < 0) candidates[1] = circle_nodes.size() - 1;
+        if (candidates[0] == candidates[1]) break;
 
         for (auto cand : candidates) {
-            double angle = 360 - fabs(current->angle - circle_nodes[cand].heading);
+            double angle = fabs(current->angle - fabs(180 - circle_nodes[cand].heading));
             if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
                 int new_pos_i = parent->i + circle_nodes[cand].i;
                 int new_pos_j = parent->j + circle_nodes[cand].j;
@@ -375,22 +401,38 @@ void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
                 if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
 
                 for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
-                    double angle_prev = fabs(parent->angle - node->angle);
+                    double angle_prev = fabs(fabs(180 - circle_nodes[cand].heading) - node->angle);
                     if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
                         if (!checkLineSegment(map, *node, *parent)) continue;
-                        if (parent->rhs > node->g + getCost(node->i, node->j, parent->i, parent->j)) {
+                        if (parent->rhs > node->rhs + getCost(node->i, node->j, parent->i, parent->j)) {
                             parent_found = true;
-                            parent->parent = node;
-                            parent->rhs = node->g + getCost(node->i, node->j, parent->i, parent->j);
+
+                            new_parent.parent = node;
+                            new_parent.angle = 180 - circle_nodes[node_straight_behind].heading;
+                            new_parent.rhs = node->rhs + getCost(node->i, node->j, parent->i, parent->j);
                         }
                     }
                 }
+            } else {
+                if (cand == candidates[0]) limit1 = false;
+                if (cand == candidates[1]) limit2 = false;
             }
         }
     }
     if (!parent_found) {
         parent->rhs = std::numeric_limits<float>::infinity();
         parent->parent = nullptr;
+    } else {
+        Node new_node = *parent;
+        new_node.parent = new_parent.parent;
+        new_node.angle = new_parent.angle;
+        new_node.rhs = new_parent.rhs;
+        Node* node = getFromNodes(new_node, map.get_width(), new_parent.parent);
+        if (node == nullptr || node->parent == nullptr) {
+            NODES.insert({parent->convolution(map.get_width()), new_node});
+            node = getFromNodes(new_node, map.get_width(), new_parent.parent);
+        }
+        current->parent = node;
     }
     current->rhs = parent->rhs + getCost(current->i, current->j, parent->i, parent->j);
 }
@@ -462,28 +504,30 @@ std::vector<Node* > DLian::GetSuccessors(Node* current, Map &map) {
     return result;
 }
 
-std::vector<Node* > DLian::GetSurroundings(Node current, Map &map) {
-    std::vector<Node *> result;
-    for (int i = current.i - 2 * distance; i <= current.i + 2 * distance; ++i) {
-        for (int j = current.j - 2 * distance; j <= current.j + 2 * distance; ++j) {
-            if (!map.CellOnGrid(i, j) || map.CellIsObstacle(i, j)) {
-                OPEN.remove_all(Node(i, j));
-                continue;
-            }
+std::vector<Node *> DLian::GetSurroundings(Node current, Map &map) {
+    std::vector<Node *> surr;
+    for (int i = std::max(0, current.i - 2 * distance); i <= current.i + 2 * distance; ++i) {
+        for (int j = std::max(0, current.j - 2 * distance); j <= current.j + 2 * distance; ++j) {
+            if (!map.CellOnGrid(i, j) || map.CellIsObstacle(i, j)) continue;
             for (auto elem : getAllNodes(Node(i, j), map.get_width())) {
-                if (elem->parent == nullptr || elem->parent->parent == nullptr) continue;
-                std::cout << *elem << *elem->parent << *elem->parent->parent << std::endl;
-                if (map.CellIsObstacle(elem->parent->i, elem->parent->j)) continue;
-                if (checkLineSegment(map, *elem->parent, *elem->parent->parent)) continue;
-                ResetParent(elem, elem->parent, map);
-                UpdateVertex(elem);
+                if (elem->parent == nullptr) continue;
+                if (elem->parent->parent == nullptr) continue;
+                if (map.CellIsObstacle(elem->parent->i, elem->parent->j)) {
+                    OPEN.remove_if(elem);
+                    continue;
+                }
+                if (checkLineSegment(map, *elem->parent, *elem->parent->parent) &&
+                    map.CellIsTraversable(elem->parent->parent->i, elem->parent->parent->j)) continue;
+                surr.push_back(elem);
             }
         }
     }
+    return surr;
 }
 
 
 void DLian::makePrimaryPath(Node* curNode) {
+    hppath.clear();
     hppath.push_front(*curNode);
     curNode = curNode->parent;
     do {
@@ -536,6 +580,7 @@ std::list<Node> DLian::smoothPath(const std::list<Node>& path, const Map& map) {
 }
 
 void DLian::makeSecondaryPath() {
+    lppath.clear();
     std::vector<Node> lineSegment;
     auto it = hppath.begin();
     Node parent = *it++;

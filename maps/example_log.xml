@@ -8,18 +8,18 @@
         <cellsize>2.7</cellsize>
         <startx>1</startx>
         <starty>1</starty>
-        <finishx>13</finishx>
-        <finishy>7</finishy>
-        <grid>
+        <finishx>9</finishx>
+        <finishy>10</finishy>
+        <grid>1
+                    <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
-            <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
-            <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
-            <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
-            <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
+            <row>0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0</row>
+            <row>0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0</row>
+            <row>0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
             <row>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</row>
@@ -31,8 +31,8 @@
     </map>
     <algorithm>
         <hweight>1</hweight>
-        <anglelimit>360</anglelimit>
-        <distance>1</distance>
+        <anglelimit>45</anglelimit>
+        <distance>10</distance>
         <postsmoothing>false</postsmoothing>
     </algorithm>
     <options>
@@ -41,8 +41,8 @@
         <logfilename/>
     </options>
     <log>
-        <mapfilename>/home/admin/Pathplanning/DynamicLIAN/DLIAN/maps/example.xml</mapfilename>
-        <summary numberofsteps="270" nodescreated="391" length="18" length_scaled="48.600000000000001" time="0.004640"/>
+        <mapfilename>/Users/natalia/Pathplanning/DLIAN/maps/example.xml</mapfilename>
+        <summary numberofsteps="10" nodescreated="11" length="0" length_scaled="0" max_angle="0" time="0.000311"/>
         <path>
             <row number="0">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
             <row number="1">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
@@ -50,9 +50,9 @@
             <row number="3">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
             <row number="4">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
             <row number="5">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
-            <row number="6">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
-            <row number="7">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
-            <row number="8">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
+            <row number="6">0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 </row>
+            <row number="7">0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 </row>
+            <row number="8">0 0 1 1 1 1 1 1 1 1 1 1 1 0 0 0 </row>
             <row number="9">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
             <row number="10">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
             <row number="11">0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 </row>
