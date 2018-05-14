@@ -153,12 +153,12 @@ SearchResult DLian::FindThePath(Map &map)
         std::cout << "THE PATH DOES NOT EXIST ON THE INITIAL MAP\n";
         return current_result;
     }
-    for (auto elem : hppath)
-        std::cout << elem << "->";
-    std::cout << std::endl;
-
+    end = std::chrono::system_clock::now();
+    current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+    current_result.ltime = current_result.time;
     Changes changes = map.DamageTheMap(lppath); //force map to change (sufficient for the correct testing)
     //map.PrintMap();
+    startt = std::chrono::system_clock::now();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
         OPEN.remove_all(dam);
     }
@@ -170,9 +170,6 @@ SearchResult DLian::FindThePath(Map &map)
         surr.insert(new_.begin(), new_.end());
     }
     for (auto elem : surr) {
-        std::cout << *elem << *elem->parent << ' ';
-        if (elem->parent->parent) std::cout << *elem->parent->parent << std::endl;
-        else std::cout << std::endl;
         ResetParent(elem, elem->parent, map);
         if (elem->parent != nullptr) UpdateVertex(elem);
     }
@@ -180,17 +177,35 @@ SearchResult DLian::FindThePath(Map &map)
     if(!ComputeShortestPath(map)) {
         current_result.pathfound = false;
         end = std::chrono::system_clock::now();
-        current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+        current_result.time += static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
         std::cout << "AFTER THE FIRST MAP CHANGE THE PATH DOES NOT EXIST\n";
         return current_result;
     }
-    for (auto elem : hppath)
-        std::cout << elem << "->";
-    std::cout << std::endl;
     end = std::chrono::system_clock::now();
-    current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+    current_result.time += static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+
     return current_result;
 }
+
+double DLian::FindTheLianPath(Map &map)
+{
+    std::chrono::time_point<std::chrono::system_clock> startt, end;
+    startt = std::chrono::system_clock::now();
+    number_of_steps = 0;
+    Initialize(map); //algorithm initialization
+    if(!ComputeShortestPath(map)) {
+        end = std::chrono::system_clock::now();
+        double ltime = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+        std::cout << "THE PATH DOES NOT EXIST ON THE INITIAL MAP\n";
+        return ltime;
+    }
+
+    end = std::chrono::system_clock::now();
+    double ltime = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+
+    return ltime;
+}
+
 
 
 
@@ -343,7 +358,7 @@ bool DLian::ComputeShortestPath(Map &map)
         current_result.pathfound = true;
         current_result.pathlength = goal->g;
         makePrimaryPath(goal);
-        if (postsmoother) hppath = smoothPath(hppath, map);
+        //if (postsmoother) hppath = smoothPath(hppath, map);
         current_result.hppath = hppath;
         makeSecondaryPath();
         //map.PrintPath(lppath);
@@ -361,7 +376,7 @@ void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
     if (parent->old_parent != nullptr) parent->old_parent = parent->parent;
     bool parent_found = false;
     Node new_parent;
-    int node_straight_behind = (int)(circle_nodes.size() / 2) - (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size();
+    int node_straight_behind = abs((int)(circle_nodes.size() / 2) - (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size());
     double angle = fabs(current->angle - fabs(180 - circle_nodes[node_straight_behind].heading));
     if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
         int new_pos_i = parent->i + circle_nodes[node_straight_behind].i;

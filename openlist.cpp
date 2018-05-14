@@ -51,6 +51,11 @@ Node* OpenList::get() { //return node wit minimum key value
     return best;
 }
 
+
+void OpenList::clear() {
+    elements.erase(elements.begin(), elements.end());
+}
+
 void OpenList::print_elements() const {
     for (auto elem : elements) {
         if (!elem.empty()) {
@@ -73,7 +78,7 @@ void OpenList::put (Node* item) { //add node to OPEN list or renew it's key valu
     bool pos_found = false;
 
     for(auto it = elements[item->i].begin(); it != elements[item->i].end(); ++it) {
-        if (!((*it)->key < item->key) && (!pos_found)) {
+        if (item->key < (*it)->key && (!pos_found)) {
             pos = it;
             pos_found = true;
         }

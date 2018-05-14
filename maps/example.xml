@@ -32,7 +32,7 @@
     <algorithm>
         <hweight>1</hweight>
         <anglelimit>45</anglelimit>
-        <distance>10</distance>
+        <distance>2</distance>
         <postsmoothing>false</postsmoothing>
     </algorithm>
     <options>

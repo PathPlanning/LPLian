@@ -16,6 +16,7 @@ public:
     ~OpenList();
 
     void resize(int size_);
+    void clear();
 
     size_t get_size() const;
     bool is_empty() const;

@@ -24,10 +24,10 @@ struct circleNode
 };
 
 struct Key{
-    double k1, k2;
+    float k1, k2;
 
-    Key() : k1(std::numeric_limits<double>::infinity()), k2(std::numeric_limits<double>::infinity()) {}
-    Key(double k1_, double k2_) : k1(k1_), k2(k2_) {}
+    Key() : k1(std::numeric_limits<float>::infinity()), k2(std::numeric_limits<float>::infinity()) {}
+    Key(float k1_, float k2_) : k1(k1_), k2(k2_) {}
     Key(const Key& other) : k1(other.k1), k2(other.k2) {}
 
     inline bool operator==(const Key& p) const {
@@ -38,6 +38,9 @@ struct Key{
     }
     inline bool operator<(const Key& p) const {
         return k1 < p.k1 || (k1 == p.k1 && k2 <= p.k2);
+    }
+    inline bool operator<=(const Key& p) const {
+        return *this < p || *this == p;
     }
 
     Key& operator=(const Key& other) {

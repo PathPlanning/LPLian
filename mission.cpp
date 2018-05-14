@@ -46,6 +46,9 @@ void Mission::createSearch()
 void Mission::startSearch()
 {
     sr = dliansearch.FindThePath(map);
+    liansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
+                        (bool)config.SearchParams[CN_SP_PS]);
+    sr.ltime += liansearch.FindTheLianPath(map);
     if (sr.pathfound) {
         std::cout << "DLIAN has found the path\n";
     }
@@ -70,7 +73,7 @@ void Mission::printSearchResultsToConsole()
 
 void Mission::saveSearchResultsToLog()
 {
-    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, sr.max_angle, map.get_cellsize());
+    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, sr.ltime, sr.max_angle, map.get_cellsize());
     if (sr.pathfound) {
         logger->writeToLogPath(sr.lppath);
         logger->writeToLogHPpath(sr.hppath);
