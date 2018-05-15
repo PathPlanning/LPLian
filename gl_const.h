@@ -61,8 +61,8 @@
     #define CNS_TAG_ATTR_NODESCREATED   "nodescreated"
     #define CNS_TAG_ATTR_LENGTH         "length"
     #define CNS_TAG_ATTR_LENGTH_SCALED  "length_scaled"
-    #define CNS_TAG_ATTR_TIME           "time"
-    #define CNS_TAG_ATTR_LTIME          "ltime"
+    #define CNS_TAG_ATTR_TIME           "dliantime"
+    #define CNS_TAG_ATTR_LTIME          "sumtime"
 
     #define CNS_TAG_ATTR_MAXANGLE       "max_angle"
     #define CNS_TAG_ATTR_ACCUMANGLE     "accum_angle"
