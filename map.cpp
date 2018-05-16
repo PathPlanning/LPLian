@@ -85,15 +85,15 @@ Changes Map::DamageTheMap(std::list<Node> path)
     int x = crash.j;
     int y = crash.i;
     damaged = crash;
-    for (int k = y - 1; k <= y + 1; ++k) {
-        for (int l = x - 1; l <= x + 1; ++l) {
+    for (int k = y - 10; k <= y + 10; ++k) {
+        for (int l = x - 10; l <= x + 10; ++l) {
             if (CellOnGrid(k, l) && CellIsTraversable(k, l) && !(k == goal_i && l == goal_j) && !(k == start_i && l == start_j)) {
                 result.occupied.push_back(Node(k, l));
                 Grid[k][l] = CN_GC_OBS;
             }
         }
     }
-
+/*
     x = crash.j + 1;
     y = crash.i - 1;
     for (int k = y - 1; k <= y + 1; ++k) {
@@ -104,6 +104,7 @@ Changes Map::DamageTheMap(std::list<Node> path)
             }
         }
     }
+    */
     return result;
 }
 

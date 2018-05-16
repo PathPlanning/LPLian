@@ -170,6 +170,9 @@ SearchResult DLian::FindThePath(Map &map)
         surr.insert(new_.begin(), new_.end());
     }
     for (auto elem : surr) {
+        std::cout << *elem << *elem->parent;
+        if (elem->parent->parent) std::cout << *elem->parent->parent;
+        std::cout << std::endl;
         ResetParent(elem, elem->parent, map);
         if (elem->parent != nullptr) UpdateVertex(elem);
     }
@@ -337,6 +340,11 @@ bool DLian::ComputeShortestPath(Map &map)
         } else {
             //OPEN.print_elements();
             current->g = std::numeric_limits<double>::infinity();
+            if (current->i == goal->i && current->j == goal->j &&
+                current->parent->i == goal->parent->i && current->parent->j == goal->parent->j) {
+                goal = current;
+            }
+
             std::vector<Node* > succ = GetSuccessors(current, map);
             succ.push_back(current);
             for (auto elem : succ) {
