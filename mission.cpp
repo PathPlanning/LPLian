@@ -40,14 +40,14 @@ bool Mission::createLog()
 void Mission::createSearch()
 {
     dliansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
-                        (bool)config.SearchParams[CN_SP_PS]);
+                        (bool)config.SearchParams[CN_SP_PS], (double)config.SearchParams[CN_SP_OP]);
 }
 
 void Mission::startSearch()
 {
     sr = dliansearch.FindThePath(map);
     liansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
-                        (bool)config.SearchParams[CN_SP_PS]);
+                        (bool)config.SearchParams[CN_SP_PS], (double)config.SearchParams[CN_SP_OP]);
     sr.ltime += liansearch.FindTheLianPath(map);
     if (sr.pathfound) {
         std::cout << "DLIAN has found the path\n";

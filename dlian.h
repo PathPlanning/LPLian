@@ -14,7 +14,7 @@ class DLian
 {
 public:
     DLian();
-    DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_);
+    DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_, float obstacleposition_);
 
     ~DLian(void);
 
@@ -31,6 +31,7 @@ private:
     int number_of_steps;
     float hweight;
     bool postsmoother; // Smoothing the path after the algorithm
+    float obstacleposition;
 
     //EnvironmentOptions opt;
     std::list<Node> hppath;

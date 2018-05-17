@@ -104,6 +104,25 @@ bool Config::getConfig(const char *FileName)
             SearchParams[CN_SP_HW] = 1;
         }
     }
+    element = algorithm->FirstChildElement(CNS_TAG_OP);
+    if (!element) {
+        std::cout << "Warning! No '" << CNS_TAG_OP << "' element found in XML file." << std::endl;
+        std::cout << "Value of '" << CNS_TAG_OP << "' was defined to default - 0.5" << std::endl;
+        SearchParams[CN_SP_OP] = 0.5;
+    }
+    else {
+        stream << element->GetText();
+        stream >> SearchParams[CN_SP_OP];
+        stream.clear();
+        stream.str("");
+
+        if (SearchParams[CN_SP_OP] < 0) {
+            std::cout << "Warning! Value of '" << CN_SP_OP << "' tag is not correctly specified. Should be >= 1."
+                          << std::endl;
+            std::cout << "Value of '" << CN_SP_OP << "' was defined to 0.5." << std::endl;
+            SearchParams[CN_SP_OP] = 0.5;
+        }
+    }
 
     element = algorithm->FirstChildElement(CNS_TAG_PS);
     if (!element) {

@@ -35,6 +35,7 @@
         #define CNS_TAG_DI          "distance"
         #define CNS_TAG_AL          "anglelimit"
         #define CNS_TAG_PS          "postsmoothing"
+        #define CNS_TAG_OP          "obstacleposition"
 
     #define CNS_TAG_OPT             "options"
         #define CNS_TAG_LOGLVL      "loglevel"
@@ -87,7 +88,7 @@
 
     #define CN_SP_PS 2 //Postsmoothing
 
-    #define CN_SP_AS 3 //AllowSqueeze
+    #define CN_SP_OP 3 //Obstacle Position
 
     #define CN_SP_MT 4 //MetricType
 

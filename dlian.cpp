@@ -1,11 +1,12 @@
 #include "dlian.h"
 
 DLian::DLian() {}
-DLian::DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_) {
+DLian::DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_, float obstacleposition_) {
     this->angleLimit = angleLimit_;
     this->distance = distance_;
     this->hweight = hweight_;
     this->postsmoother = postsmoother_;
+    this->obstacleposition = obstacleposition_;
 }
 
 DLian::~DLian()
@@ -156,7 +157,7 @@ SearchResult DLian::FindThePath(Map &map)
     end = std::chrono::system_clock::now();
     current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
     current_result.ltime = current_result.time;
-    Changes changes = map.DamageTheMap(lppath); //force map to change (sufficient for the correct testing)
+    Changes changes = map.DamageTheMap(lppath, obstacleposition); //force map to change (sufficient for the correct testing)
     //map.PrintMap();
     startt = std::chrono::system_clock::now();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors

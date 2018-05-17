@@ -19,7 +19,7 @@ class Map
         Map(const Map& orig);
         ~Map();
 
-        Changes DamageTheMap(std::list<Node> path);
+        Changes DamageTheMap(std::list<Node> path, float obstacleposition);
         bool GetMap(const char *name);
         bool CellIsTraversable (int curr_i, int curr_j) const;
         bool CellOnGrid (int curr_i, int curr_j) const;

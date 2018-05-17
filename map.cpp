@@ -62,15 +62,13 @@ double Map::get_cellsize() const {
     return CellSize;
 }
 
-Changes Map::DamageTheMap(std::list<Node> path)
+Changes Map::DamageTheMap(std::list<Node> path, float obstacleposition)
 {
     Changes result;
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> uni(4, path.size() - 4);
 
-    //auto random_number = uni(rng); //create random number to damage random part of the path
-    int random_number = (int)(path.size() / 2);
+    int random_number = (int)(path.size() * obstacleposition);
+    if (random_number < 2) random_number = 2;
+    if (random_number > path.size() - 3) random_number = path.size() - 3;
     int i = 0;
     Node crash = path.front();
     auto it = path.begin();
@@ -86,7 +84,7 @@ Changes Map::DamageTheMap(std::list<Node> path)
     int y = crash.i;
     damaged = crash;
     for (int k = y - 10; k <= y + 10; ++k) {
-        for (int l = x - 10; l <= x + 10; ++l) {
+        for (int l = x - 5; l <= x + 5; ++l) {
             if (CellOnGrid(k, l) && CellIsTraversable(k, l) && !(k == goal_i && l == goal_j) && !(k == start_i && l == start_j)) {
                 result.occupied.push_back(Node(k, l));
                 Grid[k][l] = CN_GC_OBS;
