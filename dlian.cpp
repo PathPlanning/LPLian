@@ -95,10 +95,10 @@ Node* DLian::getFromNodes(Node current_node, int width, Node* parent) {
         auto range = NODES.equal_range(it->first);
         for (auto it = range.first; it != range.second; ++it) {
             if (it->second.parent == nullptr) {
-                found =  &(it->second);
-                continue;
+                if (parent == nullptr) return &(it->second);
+                else found = &(it->second);
             }
-            if (it->second.parent->i == parent->i && it->second.parent->j == parent->j) {
+            else if (it->second.parent->i == parent->i && it->second.parent->j == parent->j) {
                 return &(it->second);
             }
         }
@@ -161,6 +161,7 @@ SearchResult DLian::FindThePath(Map &map)
     //map.PrintMap();
     startt = std::chrono::system_clock::now();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
+        //std::cout << dam << ' ';
         OPEN.remove_all(dam);
     }
     auto cmp = [](Node* a, Node* b) { return *a < *b; };
@@ -171,9 +172,10 @@ SearchResult DLian::FindThePath(Map &map)
         surr.insert(new_.begin(), new_.end());
     }
     for (auto elem : surr) {
-        std::cout << *elem << *elem->parent;
-        if (elem->parent->parent) std::cout << *elem->parent->parent;
-        std::cout << std::endl;
+        //if (elem->parent == nullptr) continue;
+        //std::cout << *elem << *elem->parent;
+        //if (elem->parent->parent) std::cout << *elem->parent->parent;
+        //std::cout << std::endl;
         ResetParent(elem, elem->parent, map);
         if (elem->parent != nullptr) UpdateVertex(elem);
     }
@@ -325,7 +327,6 @@ bool DLian::ComputeShortestPath(Map &map)
     while (OPEN.top_key_less_than(CalculateKey(*goal)) || goal->rhs != goal->g) {
         ++number_of_steps;
         Node* current = OPEN.get(); //returns element from OPEN with smalest key value
-
         if (current->g > current->rhs) {
             current->g = current->rhs;
 
@@ -341,8 +342,8 @@ bool DLian::ComputeShortestPath(Map &map)
         } else {
             //OPEN.print_elements();
             current->g = std::numeric_limits<double>::infinity();
-            if (current->i == goal->i && current->j == goal->j &&
-                current->parent->i == goal->parent->i && current->parent->j == goal->parent->j) {
+            if (current->i == goal->i && current->j == goal->j && (current->parent ||
+                current->parent->i == goal->parent->i && current->parent->j == goal->parent->j)) {
                 goal = current;
             }
 
@@ -444,8 +445,12 @@ void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
         }
     }
     if (!parent_found) {
-        parent->rhs = std::numeric_limits<float>::infinity();
-        parent->parent = nullptr;
+        Node new_node = *parent;
+        new_node.parent = nullptr;
+        new_node.rhs = std::numeric_limits<float>::infinity();
+        NODES.insert({parent->convolution(map.get_width()), new_node});
+        Node* node = getFromNodes(new_node, map.get_width(), new_parent.parent);
+        current->parent = node;
     } else {
         Node new_node = *parent;
         new_node.parent = new_parent.parent;
@@ -458,7 +463,7 @@ void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
         }
         current->parent = node;
     }
-    current->rhs = parent->rhs + getCost(current->i, current->j, parent->i, parent->j);
+    current->rhs = current->parent->rhs + getCost(current->i, current->j, current->parent->i, current->parent->j);
 }
 
 //function returns Nodes of successors of current vertex. Already with their g- and rhs-values
@@ -535,14 +540,16 @@ std::vector<Node *> DLian::GetSurroundings(Node current, Map &map) {
             if (!map.CellOnGrid(i, j) || map.CellIsObstacle(i, j)) continue;
             for (auto elem : getAllNodes(Node(i, j), map.get_width())) {
                 if (elem->parent == nullptr) continue;
-                if (elem->parent->parent == nullptr) continue;
-                if (map.CellIsObstacle(elem->parent->i, elem->parent->j)) {
+                if (map.CellIsObstacle(elem->parent->i, elem->parent->j) || !checkLineSegment(map, *elem, *elem->parent)) {
                     OPEN.remove_if(elem);
+                    elem->rhs = std::numeric_limits<float>::infinity();
                     continue;
                 }
-                if (checkLineSegment(map, *elem->parent, *elem->parent->parent) &&
-                    map.CellIsTraversable(elem->parent->parent->i, elem->parent->parent->j)) continue;
-                surr.push_back(elem);
+                if (elem->parent->parent == nullptr) continue;
+                if (!checkLineSegment(map, *elem->parent, *elem->parent->parent) ||
+                    map.CellIsObstacle(elem->parent->parent->i, elem->parent->parent->j)) {
+                    surr.push_back(elem);
+                }
             }
         }
     }
