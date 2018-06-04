@@ -156,26 +156,19 @@ SearchResult DLian::FindThePath(Map &map)
     }
     end = std::chrono::system_clock::now();
     current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
-    current_result.ltime = current_result.time;
     Changes changes = map.DamageTheMap(lppath, obstacleposition); //force map to change (sufficient for the correct testing)
-    //map.PrintMap();
+
     startt = std::chrono::system_clock::now();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
-        //std::cout << dam << ' ';
         OPEN.remove_all(dam);
     }
     auto cmp = [](Node* a, Node* b) { return *a < *b; };
     std::set<Node*, decltype(cmp)> surr(cmp);
-    //std::vector<Node*> surr;
     for (auto dam : changes.occupied) {
         std::vector<Node*> new_ = GetSurroundings(dam, map);
         surr.insert(new_.begin(), new_.end());
     }
     for (auto elem : surr) {
-        //if (elem->parent == nullptr) continue;
-        //std::cout << *elem << *elem->parent;
-        //if (elem->parent->parent) std::cout << *elem->parent->parent;
-        //std::cout << std::endl;
         ResetParent(elem, elem->parent, map);
         if (elem->parent != nullptr) UpdateVertex(elem);
     }
@@ -192,26 +185,6 @@ SearchResult DLian::FindThePath(Map &map)
 
     return current_result;
 }
-
-double DLian::FindTheLianPath(Map &map)
-{
-    std::chrono::time_point<std::chrono::system_clock> startt, end;
-    startt = std::chrono::system_clock::now();
-    number_of_steps = 0;
-    Initialize(map); //algorithm initialization
-    if(!ComputeShortestPath(map)) {
-        end = std::chrono::system_clock::now();
-        double ltime = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
-        std::cout << "THE PATH DOES NOT EXIST ON THE INITIAL MAP\n";
-        return ltime;
-    }
-
-    end = std::chrono::system_clock::now();
-    double ltime = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
-
-    return ltime;
-}
-
 
 
 

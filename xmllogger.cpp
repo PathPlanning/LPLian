@@ -211,7 +211,7 @@ void XmlLogger::writeToLogHPpath(const std::list<Node> &hppath)
     }
 }
 
-void XmlLogger::writeToLogSummary(unsigned int numberofsteps, unsigned int nodescreated, float length, double time, double ltime, double max_angle, double cellSize) {
+void XmlLogger::writeToLogSummary(unsigned int numberofsteps, unsigned int nodescreated, float length, double time, double max_angle, double cellSize) {
     if (loglevel == CN_LP_LEVEL_NOPE_WORD)
         return;
 
@@ -224,7 +224,6 @@ void XmlLogger::writeToLogSummary(unsigned int numberofsteps, unsigned int nodes
     element->SetAttribute(CNS_TAG_ATTR_LENGTH_SCALED, length*cellSize);
     element->SetAttribute(CNS_TAG_ATTR_MAXANGLE, max_angle);
     element->SetAttribute(CNS_TAG_ATTR_TIME, std::to_string(time).c_str());
-    element->SetAttribute(CNS_TAG_ATTR_LTIME, std::to_string(ltime).c_str());
 }
 
 void XmlLogger::writeToLogNotFound()
