@@ -18,7 +18,6 @@ struct SearchResult {
     std::vector<float> angles;
     float accum_angle;
     double time;
-    double ltime;
     float max_angle;
     int sections;
 

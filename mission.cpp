@@ -39,27 +39,23 @@ bool Mission::createLog()
 
 void Mission::createSearch()
 {
-    dliansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
+    liansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
                         (bool)config.SearchParams[CN_SP_PS], (double)config.SearchParams[CN_SP_OP]);
 }
 
 void Mission::startSearch()
 {
-    sr = dliansearch.FindThePath(map);
-    liansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
-                        (bool)config.SearchParams[CN_SP_PS], (double)config.SearchParams[CN_SP_OP]);
-    sr.ltime += liansearch.FindTheLianPath(map);
+    sr = liansearch.FindTheLianPath(map, true);
+    twoliansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
+                          (bool)config.SearchParams[CN_SP_PS], (double)config.SearchParams[CN_SP_OP]);
+    sr = twoliansearch.FindTheLianPath(map, false, sr.time);
     if (sr.pathfound) {
-        std::cout << "DLIAN has found the path\n";
+        std::cout << "LIANs have found the path\n";
     }
 }
 
 void Mission::printSearchResultsToConsole()
 {
-    std::cout << "DLian path ";
-    if (!sr.pathfound)
-        std::cout << "NOT ";
-    std::cout << "found!" << std::endl;
 
     std::cout << "numberofsteps: " << sr.numberofsteps << std::endl;
     std::cout << "nodescreated: " << sr.nodescreated << std::endl;
@@ -73,7 +69,7 @@ void Mission::printSearchResultsToConsole()
 
 void Mission::saveSearchResultsToLog()
 {
-    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, sr.ltime, sr.max_angle, map.get_cellsize());
+    logger->writeToLogSummary(sr.numberofsteps, sr.nodescreated, sr.pathlength, sr.time, sr.max_angle, map.get_cellsize());
     if (sr.pathfound) {
         logger->writeToLogPath(sr.lppath);
         logger->writeToLogHPpath(sr.hppath);

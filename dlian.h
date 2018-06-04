@@ -20,7 +20,7 @@ public:
 
     //main function for the whole pathbuilding algorithm
     SearchResult FindThePath(Map &map);
-    double FindTheLianPath(Map &map);
+    SearchResult FindTheLianPath(Map &map, bool damage, double time=0);
 
 private:
     float angleLimit;
