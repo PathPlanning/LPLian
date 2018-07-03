@@ -13,8 +13,8 @@ SOURCES += main.cpp \
     mission.cpp \
     tinyxml2.cpp \
     xmllogger.cpp \
-    dlian.cpp \
-    openlist.cpp
+    openlist.cpp \
+    lplian.cpp
 
 HEADERS += \
     config.h \
@@ -27,6 +27,6 @@ HEADERS += \
     tinyxml2.h \
     xmllogger.h \
     logger.h \
-    dlian.h \
-    linefunctions.h
+    linefunctions.h \
+    lplian.h
 

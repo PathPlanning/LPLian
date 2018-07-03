@@ -5,7 +5,7 @@
 #include "config.h"
 #include "logger.h"
 #include "searchresult.h"
-#include "dlian.h"
+#include "lplian.h"
 #include "xmllogger.h"
 
 class Mission
