@@ -28,8 +28,8 @@ class Mission
 
         Map                     map;
         Config                  config;
-        DLian                   dliansearch;
-        DLian                   liansearch;
+        LPLian                   dliansearch;
+        LPLian                   liansearch;
         ILogger*                logger;
         const char*             fileName;
         SearchResult            sr;

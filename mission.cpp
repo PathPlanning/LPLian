@@ -39,7 +39,7 @@ bool Mission::createLog()
 
 void Mission::createSearch()
 {
-    dliansearch = DLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
+    dliansearch = LPLian((double)config.SearchParams[CN_SP_AL], (int)config.SearchParams[CN_SP_DI], (float)config.SearchParams[CN_SP_HW],
                         (bool)config.SearchParams[CN_SP_PS], (double)config.SearchParams[CN_SP_OP]);
 }
 
@@ -53,7 +53,7 @@ void Mission::startSearch()
 
 void Mission::printSearchResultsToConsole()
 {
-    std::cout << "DLian path ";
+    std::cout << "LPLian path ";
     if (!sr.pathfound)
         std::cout << "NOT ";
     std::cout << "found!" << std::endl;

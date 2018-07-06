@@ -1,7 +1,7 @@
 #include "lplian.h"
 
-DLian::DLian() {}
-DLian::DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_, float obstacleposition_) {
+LPLian::LPLian() {}
+LPLian::LPLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_, float obstacleposition_) {
     this->angleLimit = angleLimit_;
     this->distance = distance_;
     this->hweight = hweight_;
@@ -9,7 +9,7 @@ DLian::DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother
     this->obstacleposition = obstacleposition_;
 }
 
-DLian::~DLian()
+LPLian::~LPLian()
 {
     if (!NODES.empty()) NODES.erase(NODES.begin(), NODES.end());
 }
@@ -18,12 +18,12 @@ float getCost(int a_i, int a_j, int b_i, int b_j) {
     return sqrt(abs(a_i - b_i) * abs(a_i - b_i) + abs(a_j - b_j) * abs(a_j - b_j));
 }
 
-Key DLian::CalculateKey(Node& vertex) {
+Key LPLian::CalculateKey(Node& vertex) {
     Key res(std::min(vertex.g, vertex.rhs + hweight * getCost(vertex.i, vertex.j, goal->i, goal->j)), std::min(vertex.g, vertex.rhs));
     return res;
 }
 
-void DLian::calculateCircle(int radius) { //here radius - radius of the circle in cells
+void LPLian::calculateCircle(int radius) { //here radius - radius of the circle in cells
     circle_nodes.clear();
     std::vector<circleNode> circle(0);
     int x = 0;
@@ -88,7 +88,7 @@ double calcAngle(const Node &dad, const Node &node, const Node &son) {
     return acos(cos_angle);
 }
 
-Node* DLian::getFromNodes(Node current_node, int width, Node* parent) {
+Node* LPLian::getFromNodes(Node current_node, int width, Node* parent) {
     auto it = NODES.find(current_node.convolution(width));
     Node* found = nullptr;
     if (it != NODES.end()) {
@@ -106,7 +106,7 @@ Node* DLian::getFromNodes(Node current_node, int width, Node* parent) {
     return found;
 }
 
-std::vector<Node*> DLian::getAllNodes(Node current_node, int width) {
+std::vector<Node*> LPLian::getAllNodes(Node current_node, int width) {
     std::vector<Node*> all;
     auto it = NODES.find(current_node.convolution(width));
     if (it != NODES.end()) {
@@ -117,7 +117,7 @@ std::vector<Node*> DLian::getAllNodes(Node current_node, int width) {
     return all;
 }
 
-void DLian::Initialize(Map &map)
+void LPLian::Initialize(Map &map)
 {
     Node start_node = Node(map.start_i, map.start_j);
     start_node.radius = distance;
@@ -140,7 +140,7 @@ void DLian::Initialize(Map &map)
 
 
 //The main pathbuilding function
-SearchResult DLian::FindThePath(Map &map)
+SearchResult LPLian::FindThePath(Map &map)
 {
     std::chrono::time_point<std::chrono::system_clock> startt, end;
     startt = std::chrono::system_clock::now();
@@ -188,7 +188,7 @@ SearchResult DLian::FindThePath(Map &map)
 
 
 
-void DLian::UpdateVertex(Node* node) //adding and removing vertices from OPEN list
+void LPLian::UpdateVertex(Node* node) //adding and removing vertices from OPEN list
 {
     if (!(node->IsConsistent())) {
         node->key = CalculateKey(*node);
@@ -198,7 +198,7 @@ void DLian::UpdateVertex(Node* node) //adding and removing vertices from OPEN li
     }
 }
 
-void DLian::update(Node* current_node, Node new_node, bool &successors, const Map &map) {
+void LPLian::update(Node* current_node, Node new_node, bool &successors, const Map &map) {
     if (!checkLineSegment(map, *current_node, new_node)) return;
 
     Node* node = getFromNodes(new_node, map.get_width(), current_node);
@@ -211,7 +211,7 @@ void DLian::update(Node* current_node, Node new_node, bool &successors, const Ma
     successors = true;
 }
 
-bool DLian::expand(Node* curNode, const Map &map) {
+bool LPLian::expand(Node* curNode, const Map &map) {
     bool successors_are_fine = false;
     auto parent = getFromNodes(*curNode, map.get_width(), curNode->parent);
     if (curNode->parent != nullptr) {
@@ -295,14 +295,14 @@ bool DLian::expand(Node* curNode, const Map &map) {
 
 
 //the main process of opening vertices and recalculating g- and rhs-values
-bool DLian::ComputeShortestPath(Map &map)
+bool LPLian::ComputeShortestPath(Map &map)
 {
     while (OPEN.top_key_less_than(CalculateKey(*goal)) || goal->rhs != goal->g) {
         ++number_of_steps;
         Node* current = OPEN.get(); //returns element from OPEN with smalest key value
+
         if (current->g > current->rhs) {
             current->g = current->rhs;
-
             //EXPAND FUNCTION
             expand(current, map);
             /*for (auto elem : GetSuccessors(current, map, opt)) { //for each successor(neighbor) recalculate it's rhs value
@@ -355,7 +355,7 @@ bool DLian::ComputeShortestPath(Map &map)
 }
 
 
-void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
+void LPLian::ResetParent(Node* current, Node* parent, const Map &map) {
     if (parent->old_parent != nullptr) parent->old_parent = parent->parent;
     bool parent_found = false;
     Node new_parent;
@@ -440,7 +440,7 @@ void DLian::ResetParent(Node* current, Node* parent, const Map &map) {
 }
 
 //function returns Nodes of successors of current vertex. Already with their g- and rhs-values
-std::vector<Node* > DLian::GetSuccessors(Node* current, Map &map) {
+std::vector<Node* > LPLian::GetSuccessors(Node* current, Map &map) {
     std::vector<Node*> result;
     if (current->parent != nullptr) {
         int node_straight_ahead = (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size();
@@ -506,7 +506,7 @@ std::vector<Node* > DLian::GetSuccessors(Node* current, Map &map) {
     return result;
 }
 
-std::vector<Node *> DLian::GetSurroundings(Node current, Map &map) {
+std::vector<Node *> LPLian::GetSurroundings(Node current, Map &map) {
     std::vector<Node *> surr;
     for (int i = std::max(0, current.i - 2 * distance); i <= current.i + 2 * distance; ++i) {
         for (int j = std::max(0, current.j - 2 * distance); j <= current.j + 2 * distance; ++j) {
@@ -530,7 +530,7 @@ std::vector<Node *> DLian::GetSurroundings(Node current, Map &map) {
 }
 
 
-void DLian::makePrimaryPath(Node* curNode) {
+void LPLian::makePrimaryPath(Node* curNode) {
     hppath.clear();
     hppath.push_front(*curNode);
     curNode = curNode->parent;
@@ -542,7 +542,7 @@ void DLian::makePrimaryPath(Node* curNode) {
     hppath.push_front(*curNode);
 }
 
-bool DLian::checkAngle(const Node &dad, const Node &node, const Node &son) const {
+bool LPLian::checkAngle(const Node &dad, const Node &node, const Node &son) const {
     double angle = calcAngle(dad, node, son) * 180 /  CN_PI_CONSTANT;
     if (fabs(angle) <= angleLimit) {
         return true;
@@ -551,7 +551,7 @@ bool DLian::checkAngle(const Node &dad, const Node &node, const Node &son) const
 }
 
 
-std::list<Node> DLian::smoothPath(const std::list<Node>& path, const Map& map) {
+std::list<Node> LPLian::smoothPath(const std::list<Node>& path, const Map& map) {
     std::list<Node> new_path;
     current_result.pathlength = 0;
     auto it = path.begin();
@@ -583,7 +583,7 @@ std::list<Node> DLian::smoothPath(const std::list<Node>& path, const Map& map) {
     return new_path;
 }
 
-void DLian::makeSecondaryPath() {
+void LPLian::makeSecondaryPath() {
     lppath.clear();
     std::vector<Node> lineSegment;
     auto it = hppath.begin();
@@ -599,7 +599,7 @@ void DLian::makeSecondaryPath() {
 }
 
 
-double DLian::makeAngles() {
+double LPLian::makeAngles() {
     angles.clear();
     double max_angle = 0;
     current_result.accum_angle = 0;

@@ -103,6 +103,10 @@ void OpenList::remove_if(Node* item) {
     elements[item->i].remove_if([item](Node* curr) { return *curr == *item; });
 }
 
+bool OpenList::find(Node* item) {
+    return std::find_if(elements[item->i].begin(), elements[item->i].end(),[item](Node* curr) { return *curr == *item; }) != elements[item->i].end();
+}
+
 void OpenList::remove_all(Node item) {
     elements[item.i].remove_if([item](Node* curr) { return curr->i == item.i && curr->j == item.j; });
 }

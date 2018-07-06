@@ -25,6 +25,8 @@ public:
     Node* get();
     bool top_key_less_than(Key cur_key);
     void remove_if(Node* item);
+
+    bool find(Node* item);
     void remove_all(Node item);
 
     void print_elements() const;

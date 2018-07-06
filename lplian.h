@@ -10,13 +10,13 @@
 #include <set>
 #include <chrono>
 
-class DLian
+class LPLian
 {
 public:
-    DLian();
-    DLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_, float obstacleposition_);
+    LPLian();
+    LPLian(float angleLimit_, int distance_, float hweight_, bool postsmoother_, float obstacleposition_);
 
-    ~DLian(void);
+    ~LPLian(void);
 
     //main function for the whole pathbuilding algorithm
     SearchResult FindThePath(Map &map);

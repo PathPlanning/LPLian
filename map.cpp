@@ -83,8 +83,8 @@ Changes Map::DamageTheMap(std::list<Node> path, float obstacleposition)
     int x = crash.j;
     int y = crash.i;
     damaged = crash;
-    for (int k = y - 20; k <= y + 20; ++k) {
-        for (int l = x - 5; l <= x + 5; ++l) {
+    for (int k = y - 9; k <= y + 10; ++k) {
+        for (int l = x - 5; l <= x + 4; ++l) {
             if (CellOnGrid(k, l) && CellIsTraversable(k, l) && !(k == goal_i && l == goal_j) && !(k == start_i && l == start_j)) {
                 result.occupied.push_back(Node(k, l));
                 Grid[k][l] = CN_GC_OBS;
