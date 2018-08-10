@@ -158,10 +158,11 @@ SearchResult LPLian::FindThePath(Map &map)
     current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
     Changes changes = map.DamageTheMap(lppath, obstacleposition); //force map to change (sufficient for the correct testing)
 
-    startt = std::chrono::system_clock::now();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
         OPEN.remove_all(dam); 
     }
+
+    startt = std::chrono::system_clock::now();
     auto cmp = [](Node* a, Node* b) { return *a < *b; };
     std::set<Node*, decltype(cmp)> surr(cmp);
     for (auto dam : changes.occupied) {
@@ -181,7 +182,7 @@ SearchResult LPLian::FindThePath(Map &map)
         return current_result;
     }
     end = std::chrono::system_clock::now();
-    current_result.time += static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+    current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
     return current_result;
 }
 
