@@ -49,7 +49,7 @@ private:
     void Initialize(Map &map);
     void UpdateVertex(Node* node);
 
-    void update(Node* current_node, Node new_node, bool &successors, const Map &map);
+    void update(Node new_node, const Map &map);
     bool expand(Node* curNode, const Map &map);
 
     bool ComputeShortestPath(Map &map);
@@ -57,7 +57,7 @@ private:
 
     Node* getFromNodes(Node current_node, int width, Node *parent=nullptr);
     std::vector<Node *> getAllNodes(Node current_node, int width);
-    void ResetParent(Node* current, Node *parent, const Map &map);
+    void ResetParent(Node* current, const Map &map);
 
     std::vector<Node *> GetSuccessors(Node *curr, Map &map);
     std::vector<Node *> GetSurroundings(Node current, Map &map);

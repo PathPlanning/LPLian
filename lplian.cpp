@@ -98,7 +98,7 @@ Node* LPLian::getFromNodes(Node current_node, int width, Node* parent) {
                 if (parent == nullptr) return &(it->second);
                 else found = &(it->second);
             }
-            else if (it->second.parent->i == parent->i && it->second.parent->j == parent->j) {
+            else if (parent && it->second.parent->i == parent->i && it->second.parent->j == parent->j) {
                 return &(it->second);
             }
         }
@@ -160,7 +160,7 @@ SearchResult LPLian::FindThePath(Map &map)
 
     startt = std::chrono::system_clock::now();
     for (auto dam : changes.occupied) { //for each damaged (0 -> 1) cell recounting values for it's neighbors
-        OPEN.remove_all(dam);
+        OPEN.remove_all(dam); 
     }
     auto cmp = [](Node* a, Node* b) { return *a < *b; };
     std::set<Node*, decltype(cmp)> surr(cmp);
@@ -169,8 +169,8 @@ SearchResult LPLian::FindThePath(Map &map)
         surr.insert(new_.begin(), new_.end());
     }
     for (auto elem : surr) {
-        ResetParent(elem, elem->parent, map);
-        if (elem->parent != nullptr) UpdateVertex(elem);
+        elem->rhs = std::numeric_limits<float>::infinity();
+        UpdateVertex(elem);
     }
 
     if(!ComputeShortestPath(map)) {
@@ -182,7 +182,6 @@ SearchResult LPLian::FindThePath(Map &map)
     }
     end = std::chrono::system_clock::now();
     current_result.time += static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
-
     return current_result;
 }
 
@@ -198,22 +197,20 @@ void LPLian::UpdateVertex(Node* node) //adding and removing vertices from OPEN l
     }
 }
 
-void LPLian::update(Node* current_node, Node new_node, bool &successors, const Map &map) {
-    if (!checkLineSegment(map, *current_node, new_node)) return;
+void LPLian::update(Node new_node, const Map &map) {
+    if (!checkLineSegment(map, *new_node.parent, new_node)) return;
 
-    Node* node = getFromNodes(new_node, map.get_width(), current_node);
+    Node* node = getFromNodes(new_node, map.get_width(), new_node.parent);
     if (node == nullptr || node->parent == nullptr) {
         NODES.insert({new_node.convolution(map.get_width()), new_node});
-        node = getFromNodes(new_node, map.get_width(), current_node);
+        node = getFromNodes(new_node, map.get_width(), new_node.parent);
     }
 
     UpdateVertex(node);
-    successors = true;
 }
 
 bool LPLian::expand(Node* curNode, const Map &map) {
-    bool successors_are_fine = false;
-    auto parent = getFromNodes(*curNode, map.get_width(), curNode->parent);
+    //auto parent = getFromNodes(*curNode, map.get_width(), curNode->parent);
     if (curNode->parent != nullptr) {
         int node_straight_ahead = (int)round(curNode->angle * circle_nodes.size() / 360) % circle_nodes.size();
         double angle = fabs(curNode->angle - circle_nodes[node_straight_ahead].heading);
@@ -221,12 +218,12 @@ bool LPLian::expand(Node* curNode, const Map &map) {
             int new_pos_i = curNode->i + circle_nodes[node_straight_ahead].i;
             int new_pos_j = curNode->j + circle_nodes[node_straight_ahead].j;
             if (map.CellOnGrid(new_pos_i, new_pos_j) && map.CellIsTraversable(new_pos_i, new_pos_j)) {
-                Node newNode = Node(new_pos_i, new_pos_j, parent);
+                Node newNode = Node(new_pos_i, new_pos_j);
                 newNode.angle = circle_nodes[node_straight_ahead].heading;
                 newNode.radius = curNode->radius;
-                //newNode.parent = parent;
+                newNode.parent = curNode;
                 newNode.rhs = curNode->g + getCost(newNode.i, newNode.j, curNode->i, curNode->j);
-                update(parent, newNode, successors_are_fine, map);
+                update(newNode, map);
              }
         } // now we will expand neighbors that are closest to the node that lies straight ahead
 
@@ -246,12 +243,12 @@ bool LPLian::expand(Node* curNode, const Map &map) {
                     if (!map.CellOnGrid(new_pos_i, new_pos_j)) continue;
                     if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
 
-                    Node newNode = Node(new_pos_i, new_pos_j, parent);
+                    Node newNode = Node(new_pos_i, new_pos_j);
                     newNode.angle = circle_nodes[cand].heading;
                     newNode.radius = curNode->radius;
-                    //newNode.parent = parent;
+                    newNode.parent = curNode;
                     newNode.rhs = curNode->g + getCost(newNode.i, newNode.j, curNode->i, curNode->j);
-                    update(curNode, newNode, successors_are_fine, map);
+                    update(newNode, map);
                 } else {
                     if (cand == candidates[0]) limit1 = false;
                     else limit2 = false;
@@ -268,12 +265,12 @@ bool LPLian::expand(Node* curNode, const Map &map) {
             if (!map.CellOnGrid(new_pos_i, new_pos_j)) continue;
             if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
 
-            Node newNode = Node(new_pos_i, new_pos_j, parent);
+            Node newNode = Node(new_pos_i, new_pos_j);
             newNode.radius = curNode->radius;
             newNode.angle = circle_nodes[angle_position].heading;
-            //newNode.parent = parent;
+            newNode.parent = curNode;
             newNode.rhs = curNode->g + getCost(newNode.i, newNode.j, curNode->i, curNode->j);
-            update(curNode, newNode, successors_are_fine, map);
+            update(newNode, map);
         }
     }
 
@@ -282,15 +279,15 @@ bool LPLian::expand(Node* curNode, const Map &map) {
         double angle = calcAngle(*curNode->parent, *curNode, *goal);
 
         if (fabs(angle * 180 / CN_PI_CONSTANT) <= angleLimit) {
-            goal->parent = parent;
+            goal->parent = curNode;
             goal->angle = curNode->angle;
             goal->radius = curNode->radius;
             goal->rhs = curNode->g + getCost(map.goal_i, map.goal_j, curNode->i, curNode->j);
-            goal->g = goal->rhs;
-            //update(curNode, *goal, successors_are_fine, map);
+            //goal->g = goal->rhs;
+            update(*goal, map);
         }
     }
-    return successors_are_fine;
+    return true;
 }
 
 
@@ -300,40 +297,28 @@ bool LPLian::ComputeShortestPath(Map &map)
     while (OPEN.top_key_less_than(CalculateKey(*goal)) || goal->rhs != goal->g) {
         ++number_of_steps;
         Node* current = OPEN.get(); //returns element from OPEN with smalest key value
-
         if (current->g > current->rhs) {
             current->g = current->rhs;
             //EXPAND FUNCTION
             expand(current, map);
-            /*for (auto elem : GetSuccessors(current, map, opt)) { //for each successor(neighbor) recalculate it's rhs value
-                if (elem->rhs > current->g + GetCost(elem->cell, current->cell)) {
-                    elem->parent = current;
-                    elem->rhs = current->g + GetCost(elem->cell, current->cell);
-                }
-                UpdateVertex(elem);
-            }*/
         } else {
-            //OPEN.print_elements();
             current->g = std::numeric_limits<double>::infinity();
             if (current->i == goal->i && current->j == goal->j && (current->parent ||
                 current->parent->i == goal->parent->i && current->parent->j == goal->parent->j)) {
                 goal = current;
             }
-
             std::vector<Node* > succ = GetSuccessors(current, map);
-            succ.push_back(current);
             for (auto elem : succ) {
                 if (elem->parent == nullptr) continue;
                 if (!(elem->i == start->i && elem->j == start->j) &&
-                    !(elem->parent->i == start->i && elem->parent->j == start->j) &&
-                      elem->parent->i == current->i && elem->parent->j == current->j) {
-
-                   //RESET PARENT
-                    ResetParent(elem, current, map);
+                    !(elem->parent->i == start->i && elem->parent->j == start->j)) {
+                    ResetParent(elem, map);
                 }
                 UpdateVertex(elem);
             }
+            UpdateVertex(current);
         }
+
     }
     current_result.nodescreated = NODES.size();
     current_result.numberofsteps = number_of_steps;
@@ -344,7 +329,6 @@ bool LPLian::ComputeShortestPath(Map &map)
         //if (postsmoother) hppath = smoothPath(hppath, map);
         current_result.hppath = hppath;
         makeSecondaryPath();
-        //map.PrintPath(lppath);
         current_result.lppath = lppath;
         current_result.max_angle = makeAngles();
         current_result.angles = angles;
@@ -355,59 +339,66 @@ bool LPLian::ComputeShortestPath(Map &map)
 }
 
 
-void LPLian::ResetParent(Node* current, Node* parent, const Map &map) {
-    if (parent->old_parent != nullptr) parent->old_parent = parent->parent;
+void LPLian::ResetParent(Node* current, const Map &map) {
     bool parent_found = false;
     Node new_parent;
-    int node_straight_behind = abs((int)(circle_nodes.size() / 2) - (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size());
-    double angle = fabs(current->angle - fabs(180 - circle_nodes[node_straight_behind].heading));
-    if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
-        int new_pos_i = parent->i + circle_nodes[node_straight_behind].i;
-        int new_pos_j = parent->j + circle_nodes[node_straight_behind].j;
-        if (map.CellOnGrid(new_pos_i, new_pos_j) && map.CellIsTraversable(new_pos_i, new_pos_j)) {
+    new_parent.rhs = std::numeric_limits<float>::infinity();
+    int node_straight_ahead = (int)round(current->angle * circle_nodes.size() / 360) % circle_nodes.size();
+    int node_straight_behind = ((int)(circle_nodes.size() / 2) + node_straight_ahead) % circle_nodes.size();
+    int new_pos_i = current->parent->i + circle_nodes[node_straight_behind].i;
+    int new_pos_j = current->parent->j + circle_nodes[node_straight_behind].j;
+    if (map.CellOnGrid(new_pos_i, new_pos_j) && map.CellIsTraversable(new_pos_i, new_pos_j)) {
 
-            for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
-                double angle_prev = fabs(fabs(180 - circle_nodes[node_straight_behind].heading) - node->angle);
-                if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
-                    if (!checkLineSegment(map, *node, *parent)) continue;
-                    if (parent->rhs > node->rhs + getCost(node->i, node->j, parent->i, parent->j)) {
-                        parent_found = true;
-                        new_parent.parent = node;
-                        new_parent.angle = 180 - circle_nodes[node_straight_behind].heading;
-                        new_parent.rhs = node->rhs + getCost(node->i, node->j, parent->i, parent->j);
-                    }
+        for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
+            if (node->rhs == std::numeric_limits<float>::infinity()) continue;
+            double angle_prev = 180 + circle_nodes[node_straight_behind].heading;
+            if (angle_prev > 360) angle_prev -= 360;
+            angle_prev = fabs(angle_prev - node->angle);
+            if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
+                if (!checkLineSegment(map, *node, *current->parent)) continue;
+                if (new_parent.rhs > node->g + getCost(node->i, node->j, current->parent->i, current->parent->j)) {
+                    parent_found = true;
+                    new_parent.parent = node;
+                    new_parent.angle = 180 + circle_nodes[node_straight_behind].heading;
+                    if (new_parent.angle > 360) new_parent.angle -= 360;
+                    new_parent.rhs = node->g + getCost(node->i, node->j, current->parent->i, current->parent->j);
                 }
             }
-         }
-    }
+        }
+     }
 
     std::vector<int> candidates = std::vector<int>{node_straight_behind, node_straight_behind};
     bool limit1 = true;
     bool limit2 = true;
-    while (limit1 || limit2) { // untill the whole circle is explored or we exessed anglelimit somewhere
+    while (++candidates[0] != --candidates[1] && (limit1 || limit2)) { // untill the whole circle is explored or we exessed anglelimit somewhere
         if (candidates[0] >= circle_nodes.size()) candidates[0] = 0;
-        if (candidates[1] < 0) candidates[1] = circle_nodes.size() - 1;
-        if (candidates[0] == candidates[1]) break;
+        if (candidates[1] < 0) candidates[1] = circle_nodes.size() - 1; 
 
         for (auto cand : candidates) {
-            double angle = fabs(current->angle - fabs(180 - circle_nodes[cand].heading));
+            double angle = 180 + circle_nodes[cand].heading;
+            if (angle > 360) angle -= 360;
+            angle = fabs(angle - current->angle);
             if ((angle <= 180 && angle <= angleLimit) || (angle > 180 && 360 - angle <= angleLimit)) {
-                int new_pos_i = parent->i + circle_nodes[cand].i;
-                int new_pos_j = parent->j + circle_nodes[cand].j;
+                int new_pos_i = current->parent->i + circle_nodes[cand].i;
+                int new_pos_j = current->parent->j + circle_nodes[cand].j;
 
                 if (!map.CellOnGrid(new_pos_i, new_pos_j)) continue;
                 if (map.CellIsObstacle(new_pos_i, new_pos_j)) continue;
 
                 for (auto node : getAllNodes(Node(new_pos_i, new_pos_j), map.get_width())) {
-                    double angle_prev = fabs(fabs(180 - circle_nodes[cand].heading) - node->angle);
+                    if (node->rhs == std::numeric_limits<float>::infinity()) continue;
+                    double angle_prev = 180 + circle_nodes[cand].heading;
+                    if (angle_prev > 360) angle_prev -= 360;
+                    angle_prev = fabs(angle_prev - node->angle);
                     if ((angle_prev <= 180 && angle_prev <= angleLimit) || (angle_prev > 180 && 360 - angle_prev <= angleLimit)) {
-                        if (!checkLineSegment(map, *node, *parent)) continue;
-                        if (parent->rhs > node->rhs + getCost(node->i, node->j, parent->i, parent->j)) {
+                        if (!checkLineSegment(map, *node, *current->parent)) continue;
+                        if (new_parent.rhs > node->g + getCost(node->i, node->j, current->parent->i, current->parent->j)) {
                             parent_found = true;
 
                             new_parent.parent = node;
-                            new_parent.angle = 180 - circle_nodes[node_straight_behind].heading;
-                            new_parent.rhs = node->rhs + getCost(node->i, node->j, parent->i, parent->j);
+                            new_parent.angle = 180 + circle_nodes[cand].heading;
+                            if (new_parent.angle > 360) new_parent.angle -= 360;
+                            new_parent.rhs = node->g + getCost(node->i, node->j, current->parent->i, current->parent->j);
                         }
                     }
                 }
@@ -417,26 +408,24 @@ void LPLian::ResetParent(Node* current, Node* parent, const Map &map) {
             }
         }
     }
+
+    Node new_node = *current->parent;
     if (!parent_found) {
-        Node new_node = *parent;
-        new_node.parent = nullptr;
-        new_node.rhs = std::numeric_limits<float>::infinity();
-        NODES.insert({parent->convolution(map.get_width()), new_node});
-        Node* node = getFromNodes(new_node, map.get_width(), new_parent.parent);
-        current->parent = node;
+        current->parent->rhs = std::numeric_limits<float>::infinity();
     } else {
-        Node new_node = *parent;
         new_node.parent = new_parent.parent;
-        new_node.angle = new_parent.angle;
-        new_node.rhs = new_parent.rhs;
-        Node* node = getFromNodes(new_node, map.get_width(), new_parent.parent);
+        Node* node = getFromNodes(new_node, map.get_width(), new_node.parent);
         if (node == nullptr || node->parent == nullptr) {
-            NODES.insert({parent->convolution(map.get_width()), new_node});
+            NODES.insert({new_node.convolution(map.get_width()), new_node});
             node = getFromNodes(new_node, map.get_width(), new_parent.parent);
         }
+        node->rhs = new_parent.rhs;
+        node->g = new_parent.rhs;
         current->parent = node;
     }
+
     current->rhs = current->parent->rhs + getCost(current->i, current->j, current->parent->i, current->parent->j);
+
 }
 
 //function returns Nodes of successors of current vertex. Already with their g- and rhs-values
@@ -498,9 +487,10 @@ std::vector<Node* > LPLian::GetSuccessors(Node* current, Map &map) {
         double angle = calcAngle(*current->parent, *current, *goal);
 
         if (fabs(angle * 180 / CN_PI_CONSTANT) <= angleLimit) {
-            goal->parent = current;
             Node* succ = getFromNodes(Node(map.goal_i, map.goal_j), map.get_width(), current);
-            if (succ) result.push_back(succ);
+            if (succ) {
+                result.push_back(succ);
+            }
         }
     }
     return result;
@@ -508,19 +498,12 @@ std::vector<Node* > LPLian::GetSuccessors(Node* current, Map &map) {
 
 std::vector<Node *> LPLian::GetSurroundings(Node current, Map &map) {
     std::vector<Node *> surr;
-    for (int i = std::max(0, current.i - 2 * distance); i <= current.i + 2 * distance; ++i) {
-        for (int j = std::max(0, current.j - 2 * distance); j <= current.j + 2 * distance; ++j) {
+    for (int i = std::max(0, current.i - distance); i <= current.i + distance; ++i) {
+        for (int j = std::max(0, current.j - distance); j <= current.j + distance; ++j) {
             if (!map.CellOnGrid(i, j) || map.CellIsObstacle(i, j)) continue;
             for (auto elem : getAllNodes(Node(i, j), map.get_width())) {
                 if (elem->parent == nullptr) continue;
                 if (map.CellIsObstacle(elem->parent->i, elem->parent->j) || !checkLineSegment(map, *elem, *elem->parent)) {
-                    OPEN.remove_if(elem);
-                    elem->rhs = std::numeric_limits<float>::infinity();
-                    continue;
-                }
-                if (elem->parent->parent == nullptr) continue;
-                if (!checkLineSegment(map, *elem->parent, *elem->parent->parent) ||
-                    map.CellIsObstacle(elem->parent->parent->i, elem->parent->parent->j)) {
                     surr.push_back(elem);
                 }
             }

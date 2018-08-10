@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <vector>
+#include <list>
 #include <map>
 #include <cmath>
 #include <iostream>
@@ -63,22 +64,20 @@ public:
     int i, j;
 
     Node *parent;
-    Node *old_parent;
 
     int   radius;
     double angle;
 
     Node() : i(-1), j(-1), g(std::numeric_limits<float>::infinity()), rhs(std::numeric_limits<float>::infinity()),
-             parent(nullptr), old_parent(nullptr), radius(CN_PTD_D), angle(0) {}
+             parent(nullptr), radius(CN_PTD_D), angle(0) {}
 
     Node(int x, int y,  Node *parent_=nullptr, float g_=std::numeric_limits<float>::infinity(), float rhs_ = std::numeric_limits<float>::infinity(),
          float radius_=CN_PTD_D, double ang_=0) :
-        i(x), j(y), g(g_), rhs(rhs_), radius(radius_), parent(parent_), old_parent(nullptr), angle(ang_) {
+        i(x), j(y), g(g_), rhs(rhs_), radius(radius_), parent(parent_), angle(ang_) {
     }
 
     ~Node() {
         parent = nullptr;
-        old_parent = nullptr;
     }
 
     inline Node& operator=(const Node& other) {
@@ -94,7 +93,7 @@ public:
     }
 
     inline bool operator==(const Node& p) const {
-            return i == p.i && j == p.j && parent->i == p.parent->i && parent->j == p.parent->j;
+        return i == p.i && j == p.j && parent->i == p.parent->i && parent->j == p.parent->j;
     }
 
     inline bool operator!=(const Node& p) const {
