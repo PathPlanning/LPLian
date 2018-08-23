@@ -182,7 +182,7 @@ SearchResult LPLian::FindThePath(Map &map)
         return current_result;
     }
     end = std::chrono::system_clock::now();
-    current_result.time = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
+    current_result.time += static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - startt).count()) / 1000000000;
     return current_result;
 }
 
